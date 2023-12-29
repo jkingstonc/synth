@@ -1,0 +1,55 @@
+
+HELP_STRING = """
+Welcome to synDB
+- h    : to display help
+- repl : to open a repl
+"""
+
+
+
+
+// function to allocate some disk space and load it into memory for writing
+allocate_disk_space :: {
+    import io, memory
+}
+
+
+
+
+
+main :: {
+
+    import process
+
+
+    // todo raise an exception
+    if process.args.len < 0 {
+        println(HELP_STRING)
+    }
+
+
+
+}
+
+// todo how do we want to do this
+build :: () {
+    
+    import os
+
+    // todo where do we allocate this and how do we initialise it?
+    builder = Builder()
+
+    match os.platform.id {
+        case os.platform.Platform.WIN32 {
+            ...
+        }
+        case os.platform.Platform.UNIX {
+            ...
+        }
+    }
+
+    builder.entry_point = main
+    builder.binary_name = "synthdb"
+
+    builder.build()
+}
