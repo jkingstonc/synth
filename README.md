@@ -1,0 +1,2 @@
+# synth
+Sythn programming language
