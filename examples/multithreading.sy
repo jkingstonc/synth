@@ -1,0 +1,25 @@
+
+
+
+
+
+MyAdder : interface {
+    listen : (PackedArgs(x: u32, y: u32)) -> x + y
+}
+
+
+
+main : {
+
+    // todo how do we handle anonymous args
+
+
+    pid1 = spawn(MyAdder)
+    pid2 = spawn(MyAdder)
+
+    send(pid1, PackedArgs{1, 3})
+    send(pid2, PackedArgs{4, 5})
+}
+
+
+main;

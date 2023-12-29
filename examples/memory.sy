@@ -1,0 +1,16 @@
+/*
+
+Synth memory model uses static analysis and non-GC.
+
+*/
+
+
+
+h = HeapAllocator
+
+
+// stack allocated
+x: SomeData = {"hello", 123}
+
+// custom memory allocated
+y: SomeData = {"hello", 123}
