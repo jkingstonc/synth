@@ -9,3 +9,7 @@ Sythn programming language
 - Hot-reloading
 - Standard package manager
 - Plenty of built-in debugging
+
+
+# Resources
+- https://github.com/jkingstoncsecond/trove

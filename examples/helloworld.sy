@@ -1,8 +1,5 @@
 
 
-
-
-
 main {
     println("hello, world!")
 }
