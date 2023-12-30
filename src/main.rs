@@ -16,11 +16,16 @@ fn main() {
 
     // println!("Welcome to synth");
 
-    // let mut lexer = lex::Lexer::new();
-
     let args = Args::parse();
 
     let source = std::fs::read_to_string(args.file).expect("unable to read source file test.trove");
 
     println!("source:\n{}", source);
+
+    let mut lexer = lex::Lexer::new();
+    lexer.lex(Box::new(source));
+
+    for token in lexer.tokens.iter() {
+        println!("token {:?}.", token);
+    }
 }
