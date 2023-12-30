@@ -1,6 +1,9 @@
 use clap::Parser;
+use log::{debug, info, warn};
 
 mod lex;
+
+const VERSION: &str = "0.0.1";
 
 /// Simple program to greet a person
 #[derive(Parser, Debug)]
@@ -13,19 +16,19 @@ struct Args {
 
 fn main() {
     std::env::set_var("RUST_BACKTRACE", "1");
+    std::env::set_var("RUST_LOG", "debug");
+    env_logger::init();
 
-    // println!("Welcome to synth");
+    info!("synth {}", VERSION);
 
     let args = Args::parse();
 
     let source = std::fs::read_to_string(args.file).expect("unable to read source file test.trove");
 
-    println!("source:\n{}", source);
-
     let mut lexer = lex::Lexer::new();
     lexer.lex(Box::new(source));
 
     for token in lexer.tokens.iter() {
-        println!("token {:?}.", token);
+        debug!("token {:?}.", token);
     }
 }
