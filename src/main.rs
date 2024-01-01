@@ -3,6 +3,8 @@ use log::{debug, info, warn};
 
 mod lex;
 
+
+const TEST: &str = "hello, world";
 const VERSION: &str = "0.0.1";
 
 /// Simple program to greet a person
