@@ -18,8 +18,6 @@ sum fn (nums: [i32]) -> i32 { // sum the numbers in the array
 	nums.reduce(current, num => current + num)
 }
 
-
-
 conditional_compilation fn {
 	
 	comp if OS.platform == OS.Platform.WIN32 {
@@ -31,7 +29,22 @@ conditional_compilation fn {
 }
 
 
-type_system fn {}
+type_system fn {
+
+	// the compiler knows that this block has values that need resolving at compile time, so wherever its used that resolution wil happen
+	List :: fn(typ: comp u32) -> type {
+		type {
+			data: [typ];
+		}
+	}
+
+	x :: List(u32);
+
+
+	
+
+
+}
 
 
 memory_allocation fn {}
