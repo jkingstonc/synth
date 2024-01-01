@@ -1,0 +1,22 @@
+
+
+
+something_that_may_fail fn -> u32 {
+	
+	x = rand()
+
+	if x {
+		return x
+	}
+
+	return Error("x is invalid")
+}
+
+
+main fn {
+	// i don't think we should have to 'try' this as the function signature shouldn't change how the function is called
+	x :: something_that_may_fail()
+	
+
+
+}

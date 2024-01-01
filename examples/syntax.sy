@@ -1,0 +1,65 @@
+// this file outlines syntax
+
+x : u32;
+x : u32 = 123;
+x ::    = 123;
+
+some_other_fn fn {}
+some_other_fn fn -> u32 {}
+some_other_fn fn (x: u32) -> u32 {}
+
+
+i_will_fail fn -> <u32, string, Error> { // curly braces indicate that this link could do one or the other
+	Error("this is a forced error")
+}
+
+
+sum fn (nums: [i32]) -> i32 { // sum the numbers in the array
+	nums.reduce(current, num => current + num)
+}
+
+
+
+conditional_compilation fn {
+	
+	comp if OS.platform == OS.Platform.WIN32 {
+		insert println("welcome to windows!");
+	} else {
+		insert println("welcome to unix!");
+	}
+
+}
+
+
+type_system fn {}
+
+
+memory_allocation fn {}
+
+main fn {
+	
+	some_other_fn(x=123);
+	some_other_fn(123); // this will compiler error as you have to specify function args
+
+
+	// this indicates that x is either a link to a u32, a string or an error (this is a first-class builtin)
+	x :: i_will_fail() ~~ e => {
+		println("{} has failed", x);
+		panic();
+	}
+
+	// this is executed at compile time
+	sum_of_nums :: comp sum(nums=[1, 3, 5, 7, 9]);
+
+
+	
+	x :: add(1) |> sub(2) |> mul(5); // function chaining (this will be 1 * 2 * 5 = 10)
+
+
+}
+
+build fn {
+	builder :: Builder();
+	builder.build();
+}
+
