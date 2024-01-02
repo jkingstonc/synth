@@ -1,16 +1,28 @@
-/*
-
-Synth memory model uses static analysis and non-GC.
-
-*/
 
 
+//
+// Challenge: how do we pass a value around without
+// knowing where its allocated.
+//
+//
 
-h = HeapAllocator
+h = heap
+
+// stack allocated (this uses the default Stack allocator)
+
+x const = 123
+y const = 455
+
+// heap allocated (this uses the builtin heap allocator)
+
+x h(u32) = 123
+y h(u32) = 455
 
 
-// stack allocated
-x: SomeData = {"hello", 123}
+// custom allocated
 
-// custom memory allocated
-y: SomeData = {"hello", 123}
+MyCustomAllocator {...}
+
+x MyCustomAllocator(u32) = 123
+y MyCustomAllocator(u32) = 123
+

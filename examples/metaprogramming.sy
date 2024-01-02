@@ -1,0 +1,12 @@
+// how to do metaprogramming
+
+
+
+
+
+
+x :: comp 1 + 2 // this will be computed at compile time
+
+y :: comp x + 3 // this clearly depends on x so will wait for it
+
+

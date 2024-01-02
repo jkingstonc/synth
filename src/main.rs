@@ -4,6 +4,8 @@ use log::{debug, info, warn};
 mod lex;
 mod types;
 
+
+const TEST: &str = "hello, world";
 const VERSION: &str = "0.0.1";
 
 /// Simple program to greet a person
@@ -16,6 +18,7 @@ struct Args {
 }
 
 fn main() {
+
     std::env::set_var("RUST_BACKTRACE", "1");
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
