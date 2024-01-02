@@ -4,7 +4,6 @@ use log::{debug, info, warn};
 mod lex;
 mod types;
 
-
 const TEST: &str = "hello, world";
 const VERSION: &str = "0.0.1";
 
@@ -18,7 +17,6 @@ struct Args {
 }
 
 fn main() {
-
     std::env::set_var("RUST_BACKTRACE", "1");
     std::env::set_var("RUST_LOG", "debug");
     env_logger::init();
@@ -36,7 +34,8 @@ fn main() {
         debug!("token {:?}.", token);
     }
 
-    let t = types::Type{primative: types::Primative::U32};
+    let t = types::Type {
+        primative: types::Primative::U32,
+    };
     println!("{:?}", t.size_in_bytes());
-
 }

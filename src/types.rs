@@ -1,12 +1,10 @@
-
-
-#[derive(Debug,Clone,PartialEq,Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FnPrimative {
     pub args: Vec<Type>,
-    pub return_type: Option<Box<Type>>
+    pub return_type: Option<Box<Type>>,
 }
 
-#[derive(Debug,Clone,PartialEq,Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Primative {
     U32,
     I32,
@@ -17,15 +15,13 @@ pub enum Primative {
     FN(FnPrimative),
     BLOCK,
     TYPE,
-    STRUCT
+    STRUCT,
 }
 
-
-#[derive(Debug,Clone,PartialEq,Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Type {
-    pub primative: Primative
+    pub primative: Primative,
 }
-
 
 impl Type {
     pub fn size_in_bytes(&self) -> usize {
@@ -34,9 +30,7 @@ impl Type {
             Primative::I32 => 4,
             Primative::F32 => 4,
             Primative::STRUCT => todo!("size of struct"),
-            _ => panic!("unknown type")
+            _ => panic!("unknown type"),
         }
-    } 
+    }
 }
-
-
