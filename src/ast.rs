@@ -1,0 +1,22 @@
+#[derive(Debug)]
+pub enum ParsedAST<'a> {
+    // PROGRAM(Program<'a>),
+    // STMT(Box<ParsedAST<'a>>),
+    // BLOCK(Block<'a>),
+    // IF(If<'a>),
+    // FOR(For<'a>),
+    // RET(Option<Box<ParsedAST<'a>>>),
+    // DECL(Decl<'a>),
+    // ASSIGN(Assign<'a>),
+    // IDENTIFIER(std::string::String),
+    // STRING(std::string::String),
+    // FN(Fn<'a>),
+    // NUMBER(Number),
+    // LEFT_UNARY(LeftUnary<'a>),
+    // BINARY(Binary<'a>),
+    // GROUP(Group<'a>),
+    // CALL(Call<'a>),
+    // STRUCT_TYPES_LIST(StructTypesList<'a>),
+    // LHS_ACCESS(LhsAccess<'a>),
+    // DIRECTIVE(Directive<'a>),
+}
