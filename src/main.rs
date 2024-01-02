@@ -2,6 +2,7 @@ use clap::Parser;
 use log::{debug, info, warn};
 
 mod lex;
+mod types;
 
 const VERSION: &str = "0.0.1";
 
@@ -31,4 +32,8 @@ fn main() {
     for token in lexer.tokens.iter() {
         debug!("token {:?}.", token);
     }
+
+    let t = types::Type{primative: types::Primative::U32};
+    println!("{:?}", t.size_in_bytes());
+
 }

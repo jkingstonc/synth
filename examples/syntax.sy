@@ -1,0 +1,41 @@
+
+// this is tbd!
+const os     = comp import("os")
+const memory = comp import("memory")
+
+
+// we can execute top level code!
+
+println("i will be ran before everything!")
+
+
+main fn {
+
+	const first_name = "james"
+	var last_name = "clarke"
+
+	println(name)
+	println("hi $name") // do we want this feature?
+
+	for i in 0..10 {
+		print(i)
+	}
+}
+
+
+exceptions fn {
+
+	
+	i_will_fail fn -> Maybe(File) {
+		os.open("c:/some/invalid/file")
+	}
+	
+	i_will_fail() when Maybe(Exception) {
+		panic("invalid file :(")
+	}
+
+}
+
+
+
+
