@@ -1,6 +1,7 @@
 use clap::Parser;
 use log::{debug, info, warn};
 
+mod codegen;
 mod lex;
 mod types;
 
@@ -38,4 +39,7 @@ fn main() {
         primative: types::Primative::U32,
     };
     println!("{:?}", t.size_in_bytes());
+
+    let code_generator = codegen::CodeGenerator {};
+    code_generator.generate();
 }
