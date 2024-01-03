@@ -1,4 +1,4 @@
-use crate::lex::Token;
+use crate::token::Token;
 
 #[derive(Debug)]
 pub struct Program<'a> {
@@ -39,6 +39,7 @@ pub enum Number {
     FLOAT(f32),
 }
 
+// todo this should be a struct so we get positional information
 #[derive(Debug)]
 pub enum ParsedAST<'a> {
     PROGRAM(Program<'a>),

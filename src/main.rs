@@ -9,6 +9,7 @@ mod ir;
 mod ir_parse;
 mod lex;
 mod parse;
+mod token;
 mod types;
 
 const VERSION: &str = "0.0.1";

@@ -3,7 +3,7 @@ use std::time::Instant;
 use log::debug;
 
 use crate::ast::{Assign, Binary, Call, LhsAccess, Number, ParsedAST, Program};
-use crate::lex::Token;
+use crate::token::Token;
 
 pub struct Parser<'a> {
     pub tokens: &'a Box<Vec<Token>>,
