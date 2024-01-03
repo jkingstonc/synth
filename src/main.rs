@@ -1,11 +1,12 @@
 use clap::Parser;
 use log::{debug, info, warn};
 
+mod ast;
 mod codegen;
 mod lex;
+mod parse;
 mod types;
 
-const TEST: &str = "hello, world";
 const VERSION: &str = "0.0.1";
 
 /// Simple program to greet a person
@@ -35,11 +36,10 @@ fn main() {
         debug!("token {:?}.", token);
     }
 
-    let t = types::Type {
-        primative: types::Primative::U32,
+    let mut parser = parse::Parser {
+        tokens: &lexer.tokens,
     };
-    println!("{:?}", t.size_in_bytes());
-
+    parser.parse();
     let code_generator = codegen::CodeGenerator {};
     code_generator.generate();
 }
