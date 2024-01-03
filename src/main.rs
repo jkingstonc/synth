@@ -7,6 +7,7 @@ use crate::optimize::{GeneralPassIROptimizer, IROptimizer};
 
 mod ast;
 mod codegen;
+mod comptime;
 mod ir;
 mod ir_parse;
 mod lex;
@@ -60,6 +61,9 @@ fn main() {
     for instruction in instructions.iter() {
         debug!("instruction {:?}.", instruction);
     }
+
+    let mut comptime_analyzer = comptime::ComptimeAnalyzer { ir: instructions };
+    instructions = comptime_analyzer.analyze();
 
     match args.optimize {
         Some(1) => {
