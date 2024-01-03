@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use clap::Parser;
-use log::{debug, info, warn};
+use log::{debug, error, info, warn};
 
 mod ast;
 mod codegen;
@@ -20,6 +20,8 @@ struct Args {
     /// Name of the file to run
     #[arg(short, long)]
     file: String,
+    #[arg(short, long)]
+    arch: String,
 }
 
 fn main() {
@@ -53,8 +55,19 @@ fn main() {
         debug!("instruction {:?}.", instruction);
     }
 
-    let code_generator = codegen::X86CodeGenerator { ir: instructions };
-    code_generator.generate();
+    match args.arch.as_str() {
+        "x86" => {
+            let code_generator = codegen::X86CodeGenerator { ir: instructions };
+            code_generator.generate();
+        }
+        _ => {
+            error!(
+                "unsupported format {:?}, supported formats are [x86]",
+                args.arch
+            );
+            return;
+        }
+    }
     let elapsed = now.elapsed();
     debug!(
         "compilation time elapsed {:.2?}ms ({:.2?}s).",
