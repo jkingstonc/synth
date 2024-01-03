@@ -46,7 +46,6 @@ impl Parser<'_> {
     }
 
     fn expression(&self, current: &mut usize) -> ParsedAST {
-        debug!("doing expression!");
         match self.peek(&current) {
             _ => self.comparison(current),
         }
@@ -310,7 +309,6 @@ impl Parser<'_> {
     }
 
     fn single(&self, current: &mut usize) -> ParsedAST {
-        debug!("doing single!");
         match self.peek(current) {
             // Token::HASH => {
             //     self.consume(current);
@@ -354,13 +352,10 @@ impl Parser<'_> {
                 ParsedAST::STRING(string.to_string())
             }
             Token::NUMBER(number) => {
-                debug!("doing number!");
                 let num = self.consume(current);
                 if number.parse::<i32>().is_ok() {
-                    debug!("doing i32!");
                     return ParsedAST::NUMBER(Number::INTEGER(number.parse::<i32>().unwrap()));
                 } else if number.parse::<f32>().is_ok() {
-                    debug!("doing f32!");
                     return ParsedAST::NUMBER(Number::FLOAT(number.parse::<f32>().unwrap()));
                 }
                 panic!("failed to parse number {:?}", num);
