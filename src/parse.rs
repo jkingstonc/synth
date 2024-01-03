@@ -2,7 +2,10 @@ use std::time::Instant;
 
 use log::debug;
 
-use crate::ast::{Assign, Binary, Call, LhsAccess, Number, ParsedAST, Program};
+use crate::ast::{
+    Assign, Binary, Call, ExpressionInstruction, ExpressionInstructionEnum, LhsAccess, Number,
+    ParsedAST, Program,
+};
 use crate::token::Token;
 
 pub struct Parser<'a> {
@@ -164,11 +167,11 @@ impl Parser<'_> {
     }
 
     fn assign(&self, current: &mut usize) -> ParsedAST {
-        let higher_precedence = self.plus_or_minus(current);
+        let higher_precedence = self.expression_instructions(current);
         if !self.end(current) {
             if self.expecting(Token::EQUAL, current) {
                 self.consume(current);
-                let rhs = self.plus_or_minus(current);
+                let rhs = self.expression_instructions(current);
                 return ParsedAST::ASSIGN(Assign {
                     lhs: Box::new(higher_precedence),
                     rhs: Box::new(rhs),
@@ -176,6 +179,21 @@ impl Parser<'_> {
             }
         }
         higher_precedence
+    }
+
+    // e.g. comp 1+2
+    fn expression_instructions(&self, current: &mut usize) -> ParsedAST {
+        if !self.end(&current) {
+            if self.expecting(Token::COMP, current) {
+                self.consume(current);
+                let rhs = self.plus_or_minus(current);
+                return ParsedAST::EXPRESSION_INSTRUCTION(ExpressionInstruction {
+                    instr: ExpressionInstructionEnum::COMP,
+                    rhs: Box::new(rhs),
+                });
+            }
+        }
+        self.plus_or_minus(current)
     }
 
     fn plus_or_minus(&self, current: &mut usize) -> ParsedAST {

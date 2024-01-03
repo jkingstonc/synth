@@ -56,6 +56,8 @@ pub enum Token {
     FOR,
 
     RET,
+
+    COMP,
 }
 
 pub struct Position {

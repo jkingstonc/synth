@@ -39,11 +39,23 @@ pub enum Number {
     FLOAT(f32),
 }
 
+#[derive(Debug)]
+pub enum ExpressionInstructionEnum {
+    COMP,
+}
+
+#[derive(Debug)]
+pub struct ExpressionInstruction<'a> {
+    pub instr: ExpressionInstructionEnum,
+    pub rhs: Box<ParsedAST<'a>>,
+}
+
 // todo this should be a struct so we get positional information
 #[derive(Debug)]
 pub enum ParsedAST<'a> {
     PROGRAM(Program<'a>),
     STMT(Box<ParsedAST<'a>>),
+    EXPRESSION_INSTRUCTION(ExpressionInstruction<'a>),
     // BLOCK(Block<'a>),
     // IF(If<'a>),
     // FOR(For<'a>),

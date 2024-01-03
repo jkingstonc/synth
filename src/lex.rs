@@ -61,7 +61,10 @@ impl Lexer {
                     }
                 }
                 'c' => {
-                    if self.is_keyword("const".to_string()) {
+                    if self.is_keyword("comp".to_string()) {
+                        self.tokens.push(Token::COMP);
+                        self.current += 4; // its only 3 because we + 1 later
+                    } else if self.is_keyword("const".to_string()) {
                         self.tokens.push(Token::CONST);
                         self.current += 4; // its only 3 because we + 1 later
                     } else {
