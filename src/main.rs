@@ -48,10 +48,12 @@ fn main() {
     debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser {};
-    let ir = ir_parser.parse();
-    debug!("ir {:?}", ir);
+    let instructions = ir_parser.parse();
+    for instruction in instructions.iter() {
+        debug!("instruction {:?}.", instruction);
+    }
 
-    let code_generator = codegen::X86CodeGenerator { ir };
+    let code_generator = codegen::X86CodeGenerator { ir: instructions };
     code_generator.generate();
     let elapsed = now.elapsed();
     debug!(

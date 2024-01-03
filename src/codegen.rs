@@ -3,10 +3,9 @@ use std::fs;
 use std::io::Write;
 use std::time::Instant;
 
-use crate::ir::IR;
-
+use crate::ir::Instruction;
 pub struct X86CodeGenerator {
-    pub ir: Box<IR>,
+    pub ir: Box<Vec<Instruction>>,
 }
 
 impl X86CodeGenerator {
