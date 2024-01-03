@@ -3,9 +3,13 @@ use std::fs;
 use std::io::Write;
 use std::time::Instant;
 
-pub struct CodeGenerator {}
+use crate::ir::IR;
 
-impl CodeGenerator {
+pub struct X86CodeGenerator {
+    pub ir: Box<IR>,
+}
+
+impl X86CodeGenerator {
     pub fn generate(&self) {
         let now = Instant::now();
 
