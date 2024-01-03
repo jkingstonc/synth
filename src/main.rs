@@ -3,11 +3,14 @@ use std::time::Instant;
 use clap::Parser;
 use log::{debug, error, info};
 
+use crate::optimize::{GeneralPassIROptimizer, IROptimizer};
+
 mod ast;
 mod codegen;
 mod ir;
 mod ir_parse;
 mod lex;
+mod optimize;
 mod parse;
 mod token;
 mod types;
@@ -23,6 +26,8 @@ struct Args {
     file: String,
     #[arg(short, long)]
     arch: String,
+    #[arg(short, long)]
+    optimize: Option<usize>,
 }
 
 fn main() {
@@ -51,10 +56,22 @@ fn main() {
     debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser {};
-    let instructions = ir_parser.parse();
+    let mut instructions = ir_parser.parse();
     for instruction in instructions.iter() {
         debug!("instruction {:?}.", instruction);
     }
+
+    match args.optimize {
+        Some(1) => {
+            // some optimization
+            let mut general_pass_ir_optimizer = GeneralPassIROptimizer { ir: instructions };
+            instructions = general_pass_ir_optimizer.optimize();
+        }
+        None => {}
+        _ => {}
+    }
+
+    // optimization stage
 
     match args.arch.as_str() {
         "x86" => {
