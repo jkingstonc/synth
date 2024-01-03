@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use clap::Parser;
-use log::{debug, error, info, warn};
+use log::{debug, error, info};
 
 mod ast;
 mod codegen;
