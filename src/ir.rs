@@ -2,6 +2,7 @@
 pub enum InstructionType {
     NONE,
     INT,
+    ADD,
 }
 
 #[derive(Debug)]
