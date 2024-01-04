@@ -11,8 +11,18 @@ pub enum InstructionType {
     SUB,
 }
 
+// a ref refers to a location in the IR
 #[derive(Debug)]
-pub struct InstructionData {}
+pub struct Ref {
+    pub value: u32,
+}
+
+#[derive(Debug)]
+pub enum InstructionData {
+    INT(i32),
+    FLOAT(f32),
+    DOUBLE_REF(Ref, Ref),
+}
 
 // todo this should definitely be an enum, or maybe not :')
 #[derive(Debug)]

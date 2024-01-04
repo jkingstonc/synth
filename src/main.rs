@@ -58,12 +58,12 @@ fn main() {
 
     let mut ir_parser = ir_parse::IRParser {};
     let mut instructions = ir_parser.parse(ast);
-    // for instruction in instructions.iter() {
-    // debug!("instruction {:?}.", instruction);
-    // }
+    for instruction in instructions.iter() {
+        debug!("instruction {:?}.", instruction);
+    }
 
     let mut comptime_analyzer = comptime::ComptimeAnalyzer { ir: instructions };
-    instructions = comptime_analyzer.analyze();
+    let mut instructions = comptime_analyzer.analyze();
 
     match args.optimize {
         Some(1) => {
