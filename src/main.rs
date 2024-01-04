@@ -9,6 +9,7 @@ mod ast;
 mod codegen;
 mod comptime;
 mod ir;
+mod ir_interpret;
 mod ir_parse;
 mod lex;
 mod optimize;
@@ -62,38 +63,45 @@ fn main() {
         debug!("instruction {:?}.", instruction);
     }
 
-    let mut comptime_analyzer = comptime::ComptimeAnalyzer { ir: instructions };
-    let mut instructions = comptime_analyzer.analyze();
+    // let mut comptime_analyzer = comptime::ComptimeAnalyzer { ir: instructions };
+    // let mut instructions = comptime_analyzer.analyze();
 
-    match args.optimize {
-        Some(1) => {
-            // some optimization
-            let mut general_pass_ir_optimizer = GeneralPassIROptimizer { ir: instructions };
-            instructions = general_pass_ir_optimizer.optimize();
-        }
-        None => {}
-        _ => {}
-    }
+    // match args.optimize {
+    //     Some(1) => {
+    //         // some optimization
+    //         let mut general_pass_ir_optimizer = GeneralPassIROptimizer { ir: instructions };
+    //         instructions = general_pass_ir_optimizer.optimize();
+    //     }
+    //     None => {}
+    //     _ => {}
+    // }
+
+    // tmp
+    let mut ir_interpreter = ir_interpret::IRInterpreter {
+        counter: 0,
+        instructions: instructions,
+    };
+    ir_interpreter.execute();
 
     // optimization stage
 
-    match args.arch.as_str() {
-        "x86" => {
-            let code_generator = codegen::X86CodeGenerator { ir: instructions };
-            code_generator.generate();
-        }
-        _ => {
-            error!(
-                "unsupported format {:?}, supported formats are [x86]",
-                args.arch
-            );
-            return;
-        }
-    }
-    let elapsed = now.elapsed();
-    debug!(
-        "compilation time elapsed {:.2?}ms ({:.2?}s).",
-        elapsed.as_millis(),
-        elapsed.as_secs()
-    );
+    // match args.arch.as_str() {
+    //     "x86" => {
+    //         let code_generator = codegen::X86CodeGenerator { ir: instructions };
+    //         code_generator.generate();
+    //     }
+    //     _ => {
+    //         error!(
+    //             "unsupported format {:?}, supported formats are [x86]",
+    //             args.arch
+    //         );
+    //         return;
+    //     }
+    // }
+    // let elapsed = now.elapsed();
+    // debug!(
+    //     "compilation time elapsed {:.2?}ms ({:.2?}s).",
+    //     elapsed.as_millis(),
+    //     elapsed.as_secs()
+    // );
 }

@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum InstructionType {
     NONE,
     // a block of code (i.e. this may be a lexical scope, a function block, etc)
@@ -12,12 +12,12 @@ pub enum InstructionType {
 }
 
 // a ref refers to a location in the IR
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Ref {
-    pub value: u32,
+    pub value: usize,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum InstructionData {
     INT(i32),
     FLOAT(f32),
@@ -25,7 +25,7 @@ pub enum InstructionData {
 }
 
 // todo this should definitely be an enum, or maybe not :')
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Instruction {
     pub instruction_type: InstructionType,
     pub data: InstructionData,

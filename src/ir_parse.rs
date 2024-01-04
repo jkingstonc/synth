@@ -93,7 +93,7 @@ impl IRParser {
         match binary.op {
             Token::PLUS => self.write_instruction_to_block(
                 Instruction {
-                    instruction_type: InstructionType::INT,
+                    instruction_type: InstructionType::ADD,
                     data: InstructionData::DOUBLE_REF(Ref { value: 0 }, Ref { value: 1 }),
                 },
                 instructions,
