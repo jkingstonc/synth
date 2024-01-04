@@ -7,6 +7,10 @@ pub struct IRInterpreter {
     pub instructions: Box<Vec<Instruction>>,
 }
 
+/*
+This will walk through the instructions and evaluate them (no JIT yet :().
+Still a massive WIP as we need to decide on the instruction model (SSA [Single Static Assignment] etc).
+*/
 impl IRInterpreter {
     pub fn execute(&mut self) {
         while (self.counter < self.instructions.len()) {
