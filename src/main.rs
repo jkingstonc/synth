@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{collections::HashMap, time::Instant};
 
 use clap::Parser;
 use log::{debug, error, info};
@@ -80,6 +80,7 @@ fn main() {
     let mut ir_interpreter = ir_interpret::IRInterpreter {
         counter: 0,
         instructions: instructions,
+        variables_map: HashMap::new(),
     };
     ir_interpreter.execute();
 

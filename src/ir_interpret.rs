@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use log::debug;
 
 use crate::ir::{Instruction, InstructionData, InstructionType};
@@ -5,6 +7,8 @@ use crate::ir::{Instruction, InstructionData, InstructionType};
 pub struct IRInterpreter {
     pub counter: usize,
     pub instructions: Box<Vec<Instruction>>,
+    // todo for now this is an i32 but should be a generic 'value'
+    pub variables_map: HashMap<usize, i32>,
 }
 
 /*
@@ -30,6 +34,11 @@ impl IRInterpreter {
     }
 
     pub fn execute_int(&mut self, int_instruction: Instruction) {
+        // todo probably check this is actually an INT
+        match int_instruction.data {
+            InstructionData::INT(i) => self.variables_map.insert(self.counter, i),
+            _ => panic!(),
+        };
         self.counter += 1;
     }
 
@@ -62,12 +71,9 @@ impl IRInterpreter {
                     },
                     None => panic!(),
                 }
-                debug!(
-                    "{:?} + {:?} = {:?}",
-                    left_value,
-                    right_value,
-                    left_value + right_value
-                );
+                let value = left_value + right_value;
+                self.variables_map.insert(self.counter, value);
+                debug!("{:?} + {:?} = {:?}", left_value, right_value, value);
             }
             _ => panic!(),
         }
