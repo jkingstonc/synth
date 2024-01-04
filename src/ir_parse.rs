@@ -8,7 +8,9 @@ use crate::{
     token::Token,
 };
 
-pub struct IRParser {}
+pub struct IRParser {
+    pub counter: usize,
+}
 
 // the following instructions
 //
@@ -47,7 +49,7 @@ impl IRParser {
         instructions.push(instruction);
     }
 
-    fn gen_ast(&mut self, ast: &mut ParsedAST, instructions: &mut Box<Vec<Instruction>>) {
+    fn gen_ast(&mut self, ast: &mut ParsedAST, instructions: &mut Box<Vec<Instruction>>) -> usize {
         match ast {
             ParsedAST::PROGRAM(program) => self.gen_program(program, instructions),
             ParsedAST::STMT(stmt) => self.gen_stmt(stmt, instructions),
@@ -76,33 +78,56 @@ impl IRParser {
         }
     }
 
-    fn gen_program(&mut self, program: &mut Program, instructions: &mut Box<Vec<Instruction>>) {
+    fn gen_program(
+        &mut self,
+        program: &mut Program,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> usize {
         for item in program.body.iter_mut() {
             self.gen_ast(item, instructions);
         }
+        0
     }
 
-    fn gen_stmt(&mut self, stmt: &mut Box<ParsedAST>, instructions: &mut Box<Vec<Instruction>>) {
-        self.gen_ast(stmt, instructions);
+    fn gen_stmt(
+        &mut self,
+        stmt: &mut Box<ParsedAST>,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> usize {
+        self.gen_ast(stmt, instructions)
     }
 
-    fn gen_binary(&mut self, binary: &mut Binary, instructions: &mut Box<Vec<Instruction>>) {
+    fn gen_binary(
+        &mut self,
+        binary: &mut Binary,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> usize {
         // todo we probably need to return the location etc
-        self.gen_ast(&mut binary.left, instructions);
-        self.gen_ast(&mut binary.right, instructions);
+        let left_address = self.gen_ast(&mut binary.left, instructions);
+        let right_address = self.gen_ast(&mut binary.right, instructions);
         match binary.op {
             Token::PLUS => self.write_instruction_to_block(
                 Instruction {
                     instruction_type: InstructionType::ADD,
-                    data: InstructionData::DOUBLE_REF(Ref { value: 0 }, Ref { value: 1 }),
+                    data: InstructionData::DOUBLE_REF(
+                        Ref {
+                            value: left_address,
+                        },
+                        Ref {
+                            value: right_address,
+                        },
+                    ),
                 },
                 instructions,
             ),
             _ => panic!(),
         }
+        let i = self.counter;
+        self.counter += 1;
+        i
     }
 
-    fn gen_num(&mut self, num: &mut Number, instructions: &mut Box<Vec<Instruction>>) {
+    fn gen_num(&mut self, num: &mut Number, instructions: &mut Box<Vec<Instruction>>) -> usize {
         match num {
             Number::INTEGER(i) => self.write_instruction_to_block(
                 Instruction {
@@ -118,6 +143,9 @@ impl IRParser {
                 },
                 instructions,
             ),
-        }
+        };
+        let i = self.counter;
+        self.counter += 1;
+        i
     }
 }

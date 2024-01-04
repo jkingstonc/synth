@@ -45,30 +45,46 @@ impl IRInterpreter {
     pub fn execute_add(&mut self, add_instruction: Instruction) {
         match &add_instruction.data {
             InstructionData::DOUBLE_REF(first, second) => {
-                // fetch the data at the first & second
-                let left = self.instructions.get(first.value);
-                let right = self.instructions.get(second.value);
+                //// fetch the data from the instructions at the first & second
+                // let left = self.instructions.get(first.value);
+                // let right = self.instructions.get(second.value);
+
+                // let left_value: i32;
+                // match left {
+                //     Some(left_instr_value) => match left_instr_value.instruction_type {
+                //         InstructionType::INT => match left_instr_value.data {
+                //             InstructionData::INT(i) => left_value = i,
+                //             _ => panic!("invalid instruction value"),
+                //         },
+                //         _ => panic!("invalid instruction value"),
+                //     },
+                //     None => panic!(),
+                // }
+                // let right_value: i32;
+                // match right {
+                //     Some(right_instr_value) => match right_instr_value.instruction_type {
+                //         InstructionType::INT => match right_instr_value.data {
+                //             InstructionData::INT(i) => right_value = i,
+                //             _ => panic!("invalid instruction value"),
+                //         },
+                //         _ => panic!("invalid instruction value"),
+                //     },
+                //     None => panic!(),
+                // }
+                // let value = left_value + right_value;
+                // self.variables_map.insert(self.counter, value);
+                // debug!("{:?} + {:?} = {:?}", left_value, right_value, value);
+                let left = self.variables_map.get(&first.value);
+                let right = self.variables_map.get(&second.value);
 
                 let left_value: i32;
                 match left {
-                    Some(left_instr_value) => match left_instr_value.instruction_type {
-                        InstructionType::INT => match left_instr_value.data {
-                            InstructionData::INT(i) => left_value = i,
-                            _ => panic!("invalid instruction value"),
-                        },
-                        _ => panic!("invalid instruction value"),
-                    },
+                    Some(left_instr_value) => left_value = *left_instr_value,
                     None => panic!(),
                 }
                 let right_value: i32;
                 match right {
-                    Some(right_instr_value) => match right_instr_value.instruction_type {
-                        InstructionType::INT => match right_instr_value.data {
-                            InstructionData::INT(i) => right_value = i,
-                            _ => panic!("invalid instruction value"),
-                        },
-                        _ => panic!("invalid instruction value"),
-                    },
+                    Some(right_instr_value) => right_value = *right_instr_value,
                     None => panic!(),
                 }
                 let value = left_value + right_value;
