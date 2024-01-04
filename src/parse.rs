@@ -3,8 +3,8 @@ use std::time::Instant;
 use log::debug;
 
 use crate::ast::{
-    Assign, Binary, Call, ExpressionInstruction, ExpressionInstructionEnum, LhsAccess, Number,
-    ParsedAST, Program,
+    Assign, Binary, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, LhsAccess,
+    Number, ParsedAST, Program,
 };
 use crate::token::Token;
 
@@ -57,15 +57,35 @@ impl Parser<'_> {
     }
 
     fn decl_or_assign(&self, current: &mut usize) -> ParsedAST {
-        self.assign(current)
+        // self.assign(current)
         // todo
-        // let first = self.peek(current);
+        let first = self.peek(current);
 
-        // if self.end_ahead(current, 1) {
-        //     return self.assign(current);
-        // }
+        if self.end_ahead(current, 1) {
+            return self.assign(current);
+        }
 
         // let second = self.peek_ahead(current, 1);
+
+        match first {
+            Token::CONST => {
+                self.consume(current);
+                let identifier: std::string::String;
+                match self.consume(current) {
+                    Token::IDENTIFIER(i) => identifier = i.to_string(),
+                    _ => panic!(),
+                }
+                self.consume(current); // consume the =
+                let value = self.expression(current);
+
+                return ParsedAST::DECL(Decl {
+                    identifier,
+                    requires_infering: true,
+                    value: Some(Box::new(value)),
+                });
+            }
+            _ => return self.assign(current),
+        }
 
         // match first {
         //     Token::IDENTIFIER(_) => {

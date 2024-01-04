@@ -57,7 +57,7 @@ fn main() {
     // debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser {};
-    let mut instructions = ir_parser.parse();
+    let mut instructions = ir_parser.parse(ast);
     // for instruction in instructions.iter() {
     // debug!("instruction {:?}.", instruction);
     // }

@@ -27,6 +27,15 @@ pub struct Call<'a> {
 }
 
 #[derive(Debug)]
+pub struct Decl<'a> {
+    pub identifier: std::string::String,
+    // todo types
+    // pub typ: Type,
+    pub requires_infering: bool,
+    pub value: Option<Box<ParsedAST<'a>>>,
+}
+
+#[derive(Debug)]
 pub struct LhsAccess<'a> {
     pub left: Box<ParsedAST<'a>>,
     // todo this should probably be an identifier?
@@ -60,7 +69,7 @@ pub enum ParsedAST<'a> {
     // IF(If<'a>),
     // FOR(For<'a>),
     // RET(Option<Box<ParsedAST<'a>>>),
-    // DECL(Decl<'a>),
+    DECL(Decl<'a>),
     ASSIGN(Assign<'a>),
     IDENTIFIER(std::string::String),
     STRING(std::string::String),
