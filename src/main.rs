@@ -49,15 +49,10 @@ fn main() {
     let mut lexer = lex::Lexer::new();
     lexer.lex(Box::new(source));
 
-    // for token in lexer.tokens.iter() {
-    // debug!("token {:?}.", token);
-    // }
-
     let mut parser = parse::Parser {
         tokens: &lexer.tokens,
     };
     let ast = parser.parse();
-    debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser {
         counter: 0,
