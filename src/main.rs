@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, fs::File, io::BufWriter, io::Write, time::Instant};
 
 use clap::Parser;
 use log::{debug, error, info};
@@ -28,6 +28,8 @@ struct Args {
     file: String,
     #[arg(short, long)]
     arch: String,
+    #[arg(short, long)]
+    write_ir: Option<bool>,
     #[arg(short, long)]
     optimize: Option<usize>,
 }
@@ -62,8 +64,15 @@ fn main() {
         locals_counter: 0,
     };
     let mut instructions = ir_parser.parse(ast);
-    for instruction in instructions.iter() {
-        debug!("instruction {:?}.", instruction);
+    if let Some(write_ir) = args.write_ir {
+        if write_ir {
+            let f: File = File::create("./build/build.sir").expect("unable to create file");
+            let mut writer = BufWriter::new(f);
+            for instruction in instructions.iter() {
+                write!(writer, "{}\n", instruction.to_string_for_writing())
+                    .expect("unable to write");
+            }
+        }
     }
 
     // let mut comptime_analyzer = comptime::ComptimeAnalyzer { ir: instructions };

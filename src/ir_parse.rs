@@ -141,7 +141,7 @@ impl IRParser {
                     instruction_type: InstructionType::ADD,
                     // todo maybe this should be instruction data not a ref
                     data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
-                    assignment_name: Some(format!("%{:?}", locals_id)),
+                    assignment_name: Some(format!("{:?}", locals_id)),
                 },
                 instructions,
             ),
@@ -149,7 +149,7 @@ impl IRParser {
         };
         self.counter += 1;
         Some(InstructionData::REF(Ref {
-            value: format!("%{:?}", locals_id),
+            value: format!("{:?}", locals_id),
         }))
     }
 
@@ -215,12 +215,12 @@ impl IRParser {
                 value: identifier.to_string(),
             })),
             // todo keep track of locals
-            assignment_name: Some(format!("%{:?}", locals_id)),
+            assignment_name: Some(format!("{:?}", locals_id)),
         });
 
         self.counter += 1;
         Some(InstructionData::REF(Ref {
-            value: format!("%{:?}", locals_id),
+            value: format!("{:?}", locals_id),
         }))
     }
 }

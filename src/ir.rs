@@ -55,3 +55,52 @@ pub struct Instruction {
     // this is the value the struction assigns (i.e. %0 etc)
     pub assignment_name: Option<std::string::String>,
 }
+
+impl Instruction {
+    pub fn to_string_for_writing(&self) -> std::string::String {
+        if let Some(assignment_name) = &self.assignment_name {
+            if let Some(data) = &self.data {
+                format!(
+                    "{:<10} = {:<10} {}",
+                    assignment_name,
+                    self.instruction_type.to_string(),
+                    data.to_owned().to_string_for_writing()
+                )
+            } else {
+                format!(
+                    "{:<10} = {:<10}",
+                    assignment_name,
+                    self.instruction_type.to_string()
+                )
+            }
+        } else {
+            if let Some(data) = &self.data {
+                format!(
+                    "{:<10} {:<10} {}",
+                    "",
+                    self.instruction_type.to_string(),
+                    data.to_owned().to_string_for_writing()
+                )
+            } else {
+                format!("{:<10} {:<10}", "", self.instruction_type.to_string())
+            }
+        }
+    }
+}
+
+impl InstructionData {
+    pub fn to_string_for_writing(&mut self) -> std::string::String {
+        match self {
+            InstructionData::INT(i) => format!("i32 {}", i),
+            InstructionData::FLOAT(f) => format!("f32 {}", f),
+            InstructionData::REF(r) => format!("ref {}", r.value),
+            InstructionData::DOUBLE_REF(l, r) => format!("ref {} ref {}", l.value, r.value),
+        }
+    }
+}
+
+impl std::fmt::Display for InstructionType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+    }
+}
