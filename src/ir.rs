@@ -5,10 +5,12 @@ const x = 5
 const y = 6
 const z = x + y + 7
 
-%x = int 5
-%y = int 6
-%0 = add %x %y
-%z = add %0 7
+%x = STACK_VAR 5
+%y = STACK_VAR 6
+%0 = LOAD %x
+%1 = LOAD %y
+%2 = add %0 %1
+%z = add %2 7
 
 
 */
