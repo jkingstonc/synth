@@ -5,3 +5,5 @@ const z = 789
 // todo this doesn't work
 const i = x
 const j = y
+
+i + j

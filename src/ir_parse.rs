@@ -110,24 +110,37 @@ impl IRParser {
         // todo we probably need to return the location etc
         let left_address = self.gen_ast(&mut binary.left, instructions);
         let right_address = self.gen_ast(&mut binary.right, instructions);
-        // match binary.op {
-        //     Token::PLUS => self.write_instruction_to_block(
-        //         Instruction {
-        //             instruction_type: InstructionType::ADD,
-        //             data: Some(InstructionData::DOUBLE_REF(
-        //                 Ref {
-        //                     value: left_address,
-        //                 },
-        //                 Ref {
-        //                     value: right_address,
-        //                 },
-        //             )),
-        //             assignment_name: None,
-        //         },
-        //         instructions,
-        //     ),
-        //     _ => panic!(),
-        // }
+
+        let mut left_ref: Ref = Ref {
+            value: "".to_string(),
+        };
+        let mut right_ref: Ref = Ref {
+            value: "".to_string(),
+        };
+        // todo get a reference to left and right
+        if let Some(left_address_value) = left_address {
+            if let InstructionData::REF(left_address_value_as_ref) = left_address_value {
+                left_ref = left_address_value_as_ref;
+            }
+        }
+        if let Some(right_address_value) = right_address {
+            if let InstructionData::REF(right_address_value_as_ref) = right_address_value {
+                right_ref = right_address_value_as_ref;
+            }
+        }
+
+        match binary.op {
+            Token::PLUS => self.write_instruction_to_block(
+                Instruction {
+                    instruction_type: InstructionType::ADD,
+                    // todo maybe this should be instruction data not a ref
+                    data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
+                    assignment_name: None,
+                },
+                instructions,
+            ),
+            _ => panic!(),
+        }
         self.counter += 1;
         None
     }
