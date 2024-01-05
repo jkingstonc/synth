@@ -14,16 +14,15 @@ pub struct IRParser {
 
 // the following instructions
 //
-// 4+5+my_var
+// const my_var = 2
+// my_var+4+5
 //
 // would be compiled to
 //
 
-// %0 = int 4
-// %1 = int 5
-// %2 = load "my_var"
-// %3 = add %0 %1
-// %4 = add %3 %2
+// 0 :: %my_var = int 2
+// 2 :: %0 = ADDI %my_var 4
+// 3 :: ADDI %0 5
 //
 //
 
@@ -56,6 +55,7 @@ impl IRParser {
             ParsedAST::BINARY(binary) => self.gen_binary(binary, instructions),
             ParsedAST::NUMBER(num) => self.gen_num(num, instructions),
             ParsedAST::DECL(decl) => self.gen_decl(decl, instructions),
+            ParsedAST::IDENTIFIER(identifier) => self.gen_identifier(identifier, instructions),
             // ParsedAST::DIRECTIVE(directive) => self.type_check_directive(directive),
             // ParsedAST::PROGRAM(program) => self.type_check_program(program),
             // ParsedAST::BLOCK(block) => self.type_check_block(block),
@@ -66,7 +66,6 @@ impl IRParser {
             // ParsedAST::ASSIGN(assign) => self.type_check_assign(assign),
             // ParsedAST::FN(func) => self.type_check_func(func),
             // ParsedAST::NUMBER(num) => self.type_check_num(num),
-            // ParsedAST::IDENTIFIER(identifier) => self.type_check_identifier(identifier),
             // ParsedAST::STRING(s) => self.type_check_string(s),
             // ParsedAST::LEFT_UNARY(left_unary) => self.type_check_left_unary(left_unary),//self.type_check_binary(binary),
             // ParsedAST::BINARY(binary) => self.type_check_binary(binary),
@@ -76,6 +75,10 @@ impl IRParser {
             // ParsedAST::GROUP(_) => None, // todo
             _ => panic!(),
         }
+    }
+
+    fn get_data_from_value() -> InstructionData {
+        todo!();
     }
 
     fn gen_program(
@@ -109,14 +112,14 @@ impl IRParser {
             Token::PLUS => self.write_instruction_to_block(
                 Instruction {
                     instruction_type: InstructionType::ADD,
-                    data: InstructionData::DOUBLE_REF(
+                    data: Some(InstructionData::DOUBLE_REF(
                         Ref {
                             value: left_address,
                         },
                         Ref {
                             value: right_address,
                         },
-                    ),
+                    )),
                 },
                 instructions,
             ),
@@ -132,14 +135,14 @@ impl IRParser {
             Number::INTEGER(i) => self.write_instruction_to_block(
                 Instruction {
                     instruction_type: InstructionType::INT,
-                    data: InstructionData::INT(*i),
+                    data: Some(InstructionData::INT(*i)),
                 },
                 instructions,
             ),
             Number::FLOAT(f) => self.write_instruction_to_block(
                 Instruction {
                     instruction_type: InstructionType::INT,
-                    data: InstructionData::FLOAT(*f),
+                    data: Some(InstructionData::FLOAT(*f)),
                 },
                 instructions,
             ),
@@ -154,6 +157,23 @@ impl IRParser {
         if let Some(value) = decl.value.as_mut() {
             self.gen_ast(value, instructions);
         }
+        instructions.push(Instruction {
+            instruction_type: InstructionType::STACK_VAR,
+            data: None,
+        });
+        let i = self.counter;
+        self.counter += 1;
+        i
+    }
+
+    fn gen_identifier(
+        &mut self,
+        identifier: &mut std::string::String,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> usize {
+        // do a load
+        // instructions.push(Instruction { instruction_type: InstructionType::LOAD, data: InstructionData:: })
+
         let i = self.counter;
         self.counter += 1;
         i

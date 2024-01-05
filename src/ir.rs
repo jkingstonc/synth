@@ -1,3 +1,18 @@
+/*
+
+
+const x = 5
+const y = 6
+const z = x + y + 7
+
+%x = int 5
+%y = int 6
+%0 = add %x %y
+%z = add %0 7
+
+
+*/
+
 #[derive(Debug, Clone, Copy)]
 pub enum InstructionType {
     NONE,
@@ -9,6 +24,11 @@ pub enum InstructionType {
     ADD,
     // integer subtraction
     SUB,
+    // load instruction (todo this should depend on the type?)
+    LOAD,
+    // var instruction
+    // this will allocate a variable some memory on the stack
+    STACK_VAR,
 }
 
 // a ref refers to a location in the IR
@@ -28,5 +48,5 @@ pub enum InstructionData {
 #[derive(Debug, Clone, Copy)]
 pub struct Instruction {
     pub instruction_type: InstructionType,
-    pub data: InstructionData,
+    pub data: Option<InstructionData>,
 }
