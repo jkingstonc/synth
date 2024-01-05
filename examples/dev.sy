@@ -2,8 +2,7 @@ const x = 123
 const y = 456
 const z = 789
 
-// todo this doesn't work
 const i = x
 const j = y
 
-i + j
+const hello = i + j
