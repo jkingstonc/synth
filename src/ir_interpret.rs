@@ -78,22 +78,22 @@ impl IRInterpreter {
                     // let value = left_value + right_value;
                     // self.variables_map.insert(self.counter, value);
                     // debug!("{:?} + {:?} = {:?}", left_value, right_value, value);
-                    let left = self.variables_map.get(&first.value);
-                    let right = self.variables_map.get(&second.value);
+                    // let left = self.variables_map.get(&first.value);
+                    // let right = self.variables_map.get(&second.value);
 
-                    let left_value: i32;
-                    match left {
-                        Some(left_instr_value) => left_value = *left_instr_value,
-                        None => panic!(),
-                    }
-                    let right_value: i32;
-                    match right {
-                        Some(right_instr_value) => right_value = *right_instr_value,
-                        None => panic!(),
-                    }
-                    let value = left_value + right_value;
-                    self.variables_map.insert(self.counter, value);
-                    debug!("{:?} + {:?} = {:?}", left_value, right_value, value);
+                    // let left_value: i32;
+                    // match left {
+                    //     Some(left_instr_value) => left_value = *left_instr_value,
+                    //     None => panic!(),
+                    // }
+                    // let right_value: i32;
+                    // match right {
+                    //     Some(right_instr_value) => right_value = *right_instr_value,
+                    //     None => panic!(),
+                    // }
+                    // let value = left_value + right_value;
+                    // self.variables_map.insert(self.counter, value);
+                    // debug!("{:?} + {:?} = {:?}", left_value, right_value, value);
                 }
                 _ => panic!(),
             }

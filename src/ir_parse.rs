@@ -184,9 +184,18 @@ impl IRParser {
         instructions: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
         // do a load
-        // instructions.push(Instruction { instruction_type: InstructionType::LOAD, data: InstructionData:: })
+        instructions.push(Instruction {
+            instruction_type: InstructionType::LOAD,
+            data: Some(InstructionData::REF(Ref {
+                value: identifier.to_string(),
+            })),
+            // todo keep track of locals
+            assignment_name: Some("%0".to_string()),
+        });
 
         self.counter += 1;
-        None
+        Some(InstructionData::REF(Ref {
+            value: identifier.to_string(),
+        }))
     }
 }

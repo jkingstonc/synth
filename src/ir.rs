@@ -34,15 +34,16 @@ pub enum InstructionType {
 }
 
 // a ref refers to a location in the IR
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Ref {
-    pub value: usize,
+    pub value: std::string::String,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub enum InstructionData {
     INT(i32),
     FLOAT(f32),
+    REF(Ref),
     DOUBLE_REF(Ref, Ref),
 }
 
