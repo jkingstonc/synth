@@ -47,8 +47,10 @@ pub enum InstructionData {
 }
 
 // todo this should definitely be an enum, or maybe not :')
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 pub struct Instruction {
     pub instruction_type: InstructionType,
     pub data: Option<InstructionData>,
+    // this is the value the struction assigns (i.e. %0 etc)
+    pub assignment_name: Option<std::string::String>,
 }

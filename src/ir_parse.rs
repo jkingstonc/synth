@@ -48,7 +48,12 @@ impl IRParser {
         instructions.push(instruction);
     }
 
-    fn gen_ast(&mut self, ast: &mut ParsedAST, instructions: &mut Box<Vec<Instruction>>) -> usize {
+    // todo we need to return the InstructionData with the resolved value!!!
+    fn gen_ast(
+        &mut self,
+        ast: &mut ParsedAST,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> Option<InstructionData> {
         match ast {
             ParsedAST::PROGRAM(program) => self.gen_program(program, instructions),
             ParsedAST::STMT(stmt) => self.gen_stmt(stmt, instructions),
@@ -77,26 +82,22 @@ impl IRParser {
         }
     }
 
-    fn get_data_from_value() -> InstructionData {
-        todo!();
-    }
-
     fn gen_program(
         &mut self,
         program: &mut Program,
         instructions: &mut Box<Vec<Instruction>>,
-    ) -> usize {
+    ) -> Option<InstructionData> {
         for item in program.body.iter_mut() {
             self.gen_ast(item, instructions);
         }
-        0
+        None
     }
 
     fn gen_stmt(
         &mut self,
         stmt: &mut Box<ParsedAST>,
         instructions: &mut Box<Vec<Instruction>>,
-    ) -> usize {
+    ) -> Option<InstructionData> {
         self.gen_ast(stmt, instructions)
     }
 
@@ -104,78 +105,88 @@ impl IRParser {
         &mut self,
         binary: &mut Binary,
         instructions: &mut Box<Vec<Instruction>>,
-    ) -> usize {
+    ) -> Option<InstructionData> {
         // todo we probably need to return the location etc
         let left_address = self.gen_ast(&mut binary.left, instructions);
         let right_address = self.gen_ast(&mut binary.right, instructions);
-        match binary.op {
-            Token::PLUS => self.write_instruction_to_block(
-                Instruction {
-                    instruction_type: InstructionType::ADD,
-                    data: Some(InstructionData::DOUBLE_REF(
-                        Ref {
-                            value: left_address,
-                        },
-                        Ref {
-                            value: right_address,
-                        },
-                    )),
-                },
-                instructions,
-            ),
-            _ => panic!(),
-        }
-        let i = self.counter;
+        // match binary.op {
+        //     Token::PLUS => self.write_instruction_to_block(
+        //         Instruction {
+        //             instruction_type: InstructionType::ADD,
+        //             data: Some(InstructionData::DOUBLE_REF(
+        //                 Ref {
+        //                     value: left_address,
+        //                 },
+        //                 Ref {
+        //                     value: right_address,
+        //                 },
+        //             )),
+        //             assignment_name: None,
+        //         },
+        //         instructions,
+        //     ),
+        //     _ => panic!(),
+        // }
         self.counter += 1;
-        i
+        None
     }
 
-    fn gen_num(&mut self, num: &mut Number, instructions: &mut Box<Vec<Instruction>>) -> usize {
+    fn gen_num(
+        &mut self,
+        num: &mut Number,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> Option<InstructionData> {
+        self.counter += 1;
         match num {
-            Number::INTEGER(i) => self.write_instruction_to_block(
-                Instruction {
-                    instruction_type: InstructionType::INT,
-                    data: Some(InstructionData::INT(*i)),
-                },
-                instructions,
-            ),
-            Number::FLOAT(f) => self.write_instruction_to_block(
-                Instruction {
-                    instruction_type: InstructionType::INT,
-                    data: Some(InstructionData::FLOAT(*f)),
-                },
-                instructions,
-            ),
-        };
-        let i = self.counter;
-        self.counter += 1;
-        i
+            Number::INTEGER(i) => Some(InstructionData::INT(i.clone())),
+            Number::FLOAT(f) => Some(InstructionData::FLOAT(f.clone())),
+            // Number::INTEGER(i) => self.write_instruction_to_block(
+            //     Instruction {
+            //         instruction_type: InstructionType::INT,
+            //         data: Some(InstructionData::INT(*i)),
+            //         assignment_name: None,
+            //     },
+            //     instructions,
+            // ),
+            // Number::FLOAT(f) => self.write_instruction_to_block(
+            //     Instruction {
+            //         instruction_type: InstructionType::INT,
+            //         data: Some(InstructionData::FLOAT(*f)),
+            //         assignment_name: None,
+            //     },
+            //     instructions,
+            // ),
+        }
     }
 
-    fn gen_decl(&mut self, decl: &mut Decl, instructions: &mut Box<Vec<Instruction>>) -> usize {
+    fn gen_decl(
+        &mut self,
+        decl: &mut Decl,
+        instructions: &mut Box<Vec<Instruction>>,
+    ) -> Option<InstructionData> {
         // first generate the decl value
+        let mut instruction_data = None;
         if let Some(value) = decl.value.as_mut() {
-            self.gen_ast(value, instructions);
+            instruction_data = self.gen_ast(value, instructions);
         }
         instructions.push(Instruction {
             instruction_type: InstructionType::STACK_VAR,
-            data: None,
+            data: instruction_data,
+            assignment_name: Some(decl.identifier.clone()),
         });
-        let i = self.counter;
         self.counter += 1;
-        i
+        None
     }
 
     fn gen_identifier(
         &mut self,
         identifier: &mut std::string::String,
         instructions: &mut Box<Vec<Instruction>>,
-    ) -> usize {
+    ) -> Option<InstructionData> {
         // do a load
         // instructions.push(Instruction { instruction_type: InstructionType::LOAD, data: InstructionData:: })
 
-        let i = self.counter;
         self.counter += 1;
-        i
+        None
     }
 }
