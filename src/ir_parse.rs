@@ -3,7 +3,7 @@ use std::time::Instant;
 use log::debug;
 
 use crate::{
-    ast::{Binary, Number, ParsedAST, Program},
+    ast::{Binary, Decl, Number, ParsedAST, Program},
     ir::{Instruction, InstructionData, InstructionType, Ref},
     token::Token,
 };
@@ -55,8 +55,8 @@ impl IRParser {
             ParsedAST::STMT(stmt) => self.gen_stmt(stmt, instructions),
             ParsedAST::BINARY(binary) => self.gen_binary(binary, instructions),
             ParsedAST::NUMBER(num) => self.gen_num(num, instructions),
+            ParsedAST::DECL(decl) => self.gen_decl(decl, instructions),
             // ParsedAST::DIRECTIVE(directive) => self.type_check_directive(directive),
-            // ParsedAST::STMT(stmt) => self.type_check_ast(stmt),
             // ParsedAST::PROGRAM(program) => self.type_check_program(program),
             // ParsedAST::BLOCK(block) => self.type_check_block(block),
             // ParsedAST::IF(iff) => self.type_check_if(iff),
@@ -144,6 +144,16 @@ impl IRParser {
                 instructions,
             ),
         };
+        let i = self.counter;
+        self.counter += 1;
+        i
+    }
+
+    fn gen_decl(&mut self, decl: &mut Decl, instructions: &mut Box<Vec<Instruction>>) -> usize {
+        // first generate the decl value
+        if let Some(value) = decl.value.as_mut() {
+            self.gen_ast(value, instructions);
+        }
         let i = self.counter;
         self.counter += 1;
         i

@@ -16,3 +16,9 @@ The point of synth is to make a programming languge that gets the job done witho
 
 # Resources
 - https://github.com/jkingstoncsecond/trove
+
+# TODO
+- Parse [-]
+- Type analysis [-]
+- IR generation [-]
+- X86 generation [-]

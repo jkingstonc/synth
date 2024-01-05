@@ -55,7 +55,7 @@ fn main() {
         tokens: &lexer.tokens,
     };
     let ast = parser.parse();
-    // debug!("ast {:?}", ast);
+    debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser { counter: 0 };
     let mut instructions = ir_parser.parse(ast);
@@ -99,10 +99,10 @@ fn main() {
     //         return;
     //     }
     // }
-    // let elapsed = now.elapsed();
-    // debug!(
-    //     "compilation time elapsed {:.2?}ms ({:.2?}s).",
-    //     elapsed.as_millis(),
-    //     elapsed.as_secs()
-    // );
+    let elapsed = now.elapsed();
+    debug!(
+        "compilation time elapsed {:.2?}ms ({:.2?}s).",
+        elapsed.as_millis(),
+        elapsed.as_secs()
+    );
 }
