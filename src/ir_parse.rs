@@ -107,17 +107,20 @@ impl IRParser {
         binary: &mut Binary,
         instructions: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
-        // todo we probably need to return the location etc
         let left_address = self.gen_ast(&mut binary.left, instructions);
         let right_address = self.gen_ast(&mut binary.right, instructions);
 
+        /*
+        TODO: this needs reworking, currently were assuming that the left & right are references
+        when in reality they can be immediate values. we either need to have seperate instructions
+        for mixed refs & immediates or just wack them in the same one. idk.
+         */
         let mut left_ref: Ref = Ref {
             value: "".to_string(),
         };
         let mut right_ref: Ref = Ref {
             value: "".to_string(),
         };
-        // todo get a reference to left and right
         if let Some(left_address_value) = left_address {
             if let InstructionData::REF(left_address_value_as_ref) = left_address_value {
                 left_ref = left_address_value_as_ref;
