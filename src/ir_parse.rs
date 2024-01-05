@@ -10,6 +10,7 @@ use crate::{
 
 pub struct IRParser {
     pub counter: usize,
+    pub locals_counter: usize,
 }
 
 // the following instructions
@@ -183,6 +184,9 @@ impl IRParser {
         identifier: &mut std::string::String,
         instructions: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
+        let locals_id = self.locals_counter;
+        self.locals_counter += 1;
+
         // do a load
         instructions.push(Instruction {
             instruction_type: InstructionType::LOAD,
@@ -190,12 +194,12 @@ impl IRParser {
                 value: identifier.to_string(),
             })),
             // todo keep track of locals
-            assignment_name: Some("%0".to_string()),
+            assignment_name: Some(format!("%{:?}", locals_id)),
         });
 
         self.counter += 1;
         Some(InstructionData::REF(Ref {
-            value: identifier.to_string(),
+            value: format!("%{:?}", locals_id),
         }))
     }
 }
