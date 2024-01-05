@@ -14,6 +14,9 @@ The point of synth is to make a programming languge that gets the job done witho
 - Plenty of built-in debugging
 - No weird exception control flow
 
+# Running
+`cargo run -- --file .\examples\dev.sy --arch x86 -o 1 --write-ir true`
+
 # Resources
 - https://github.com/jkingstoncsecond/trove
 
