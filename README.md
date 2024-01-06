@@ -15,7 +15,7 @@ The point of synth is to make a programming languge that gets the job done witho
 - No weird exception control flow
 
 # Running
-`cargo run -- --file .\examples\dev.sy --arch x86 -o 1 --write-ir true`
+`cargo run -- --file .\examples\dev.sy --arch x86 -o 1 --write-ir true` 
 
 # Resources
 - https://github.com/jkingstoncsecond/trove
@@ -24,4 +24,5 @@ The point of synth is to make a programming languge that gets the job done witho
 - Parse [-]
 - Type analysis [-]
 - IR generation [-]
+    - if not used, dont generate [-]
 - X86 generation [-]
