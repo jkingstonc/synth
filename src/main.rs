@@ -48,7 +48,11 @@ fn main() {
 
     let args = Args::parse();
 
-    let compiler_options = CompilerOptions { optimization: 1 };
+    let mut optimization: usize = 0;
+    if let Some(o) = args.optimize {
+        optimization = o;
+    }
+    let compiler_options = CompilerOptions { optimization };
 
     let source = std::fs::read_to_string(args.file).expect("unable to read source file test.trove");
 
