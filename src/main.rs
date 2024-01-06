@@ -102,23 +102,25 @@ fn main() {
         counter: 0,
         variables_map: HashMap::new(),
     };
-    ir_interpreter.execute(main_block);
+    ir_interpreter.execute(&main_block);
 
     // optimization stage
 
-    // match args.arch.as_str() {
-    //     "x86" => {
-    //         let code_generator = codegen::X86CodeGenerator { ir: instructions };
-    //         code_generator.generate();
-    //     }
-    //     _ => {
-    //         error!(
-    //             "unsupported format {:?}, supported formats are [x86]",
-    //             args.arch
-    //         );
-    //         return;
-    //     }
-    // }
+    match args.arch.as_str() {
+        "x86" => {
+            let mut code_generator = codegen::X86CodeGenerator {
+                str_buffer: "".to_string(),
+            };
+            code_generator.generate(&main_block);
+        }
+        _ => {
+            error!(
+                "unsupported format {:?}, supported formats are [x86]",
+                args.arch
+            );
+            return;
+        }
+    }
     let elapsed = now.elapsed();
     debug!(
         "compilation time elapsed {:.2?}ms ({:.2?}s).",

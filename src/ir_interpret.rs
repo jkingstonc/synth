@@ -20,9 +20,9 @@ This will walk through the instructions and evaluate them (no JIT yet :().
 Still a massive WIP as we need to decide on the instruction model (SSA [Single Static Assignment] etc).
 */
 impl IRInterpreter<'_> {
-    pub fn execute(&mut self, instruction: Instruction) {
+    pub fn execute(&mut self, instruction: &Instruction) {
         let now = Instant::now();
-        self.execute_instruction(&instruction);
+        self.execute_instruction(instruction);
         debug!("vars {:?}", self.variables_map);
         let elapsed = now.elapsed();
         debug!(
