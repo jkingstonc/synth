@@ -86,7 +86,7 @@ impl Instruction {
                 for instruction in instruction_data.to_vec() {
                     s = s + "    " + &instruction.to_string_for_writing() + "\n";
                 }
-                format!("{:<10}\n{:<10}", location, s)
+                format!("{:<10}\n{:<10}", location.to_string() + ":", s)
             }
             Instruction::LOAD(location, instruction_data) => {
                 format!("{:<10} = {:<10} {:?}", location, "load", instruction_data)
