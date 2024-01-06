@@ -18,7 +18,7 @@ const z = x + y + 7
 #[derive(Debug, Clone, Copy)]
 pub enum InstructionType {
     NONE,
-    // a block of code (i.e. this may be a lexical scope, a function block, etc)
+    // a block of code (this should always have a label [may change this])
     BLOCK,
     // integer literal (untyped as it could be u8, u32 etc)
     INT,
@@ -31,6 +31,8 @@ pub enum InstructionType {
     // var instruction
     // this will allocate a variable some memory on the stack
     STACK_VAR,
+    // conditional branch (as we are branching to other blocks this should be the last)
+    COND_BR,
 }
 
 // a ref refers to a location in the IR
@@ -45,6 +47,7 @@ pub enum InstructionData {
     FLOAT(f32),
     REF(Ref),
     DOUBLE_REF(Ref, Ref),
+    INSTRUCTIONS(Box<Vec<Instruction>>),
 }
 
 // todo this should definitely be an enum, or maybe not :')
@@ -95,6 +98,7 @@ impl InstructionData {
             InstructionData::FLOAT(f) => format!("f32 {}", f),
             InstructionData::REF(r) => format!("ref {}", r.value),
             InstructionData::DOUBLE_REF(l, r) => format!("ref {} ref {}", l.value, r.value),
+            InstructionData::INSTRUCTIONS(i) => format!("instructions {}", i),
         }
     }
 }

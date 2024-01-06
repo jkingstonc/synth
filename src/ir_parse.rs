@@ -5,6 +5,7 @@ use log::debug;
 use crate::{
     ast::{Binary, Decl, Number, ParsedAST, Program},
     ir::{Instruction, InstructionData, InstructionType, Ref},
+    main,
     token::Token,
 };
 
@@ -30,6 +31,7 @@ pub struct IRParser {
 impl IRParser {
     pub fn parse(&mut self, mut ast: Box<ParsedAST>) -> Box<Vec<Instruction>> {
         let mut instructions: Box<Vec<Instruction>> = Box::new(vec![]);
+
         let now = Instant::now();
         self.gen_ast(ast.as_mut(), &mut instructions);
         let elapsed = now.elapsed();
@@ -38,7 +40,13 @@ impl IRParser {
             elapsed.as_millis(),
             elapsed.as_secs()
         );
-        return instructions;
+        let main_block = Instruction {
+            instruction_type: InstructionType::BLOCK,
+            data: Some(InstructionData::INSTRUCTIONS(instructions)),
+            assignment_name: None,
+        };
+        return Box::new(vec![main_block]);
+        // return instructions;
     }
 
     fn write_instruction_to_block(
