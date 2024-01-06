@@ -42,65 +42,101 @@ pub struct Ref {
 }
 
 #[derive(Debug, Clone)]
+pub struct Block {
+    instructions: Vec<Instruction>,
+}
+
+#[derive(Debug, Clone)]
+pub struct Bin {
+    pub left: InstructionData,
+    pub right: InstructionData,
+}
+
+#[derive(Debug, Clone)]
 pub enum InstructionData {
+    REF(Ref),
     INT(i32),
     FLOAT(f32),
-    REF(Ref),
-    DOUBLE_REF(Ref, Ref),
-    INSTRUCTIONS(Box<Vec<Instruction>>),
 }
 
 // todo this should definitely be an enum, or maybe not :')
 #[derive(Debug, Clone)]
-pub struct Instruction {
-    pub instruction_type: InstructionType,
-    pub data: Option<InstructionData>,
-    // this is the value the struction assigns (i.e. %0 etc)
-    pub assignment_name: Option<std::string::String>,
+pub enum Instruction {
+    // pub instruction_type: InstructionType,
+    // pub data: Option<InstructionData>,
+    // // this is the value the struction assigns (i.e. %0 etc)
+    // pub assignment_name: Option<std::string::String>,
+    NONE,
+    BLOCK(std::string::String, Block),
+    // integer addition
+    ADD(std::string::String, Bin),
+    // integer subtraction
+    SUB(std::string::String, Bin),
+    // load instruction (todo this should depend on the type?)
+    LOAD(std::string::String, Ref),
+    // var instruction
+    // this will allocate a variable some memory on the stack
+    // for now it can not be initialised. this is fine as we know this will be on the stack
+    // so can be assigned multiple times (not a SSA in registers)
+    STACK_VAR(std::string::String, Option<InstructionData>),
+    // conditional branch (as we are branching to other blocks this should be the last)
+    // COND_BR,
 }
 
 impl Instruction {
     pub fn to_string_for_writing(&self) -> std::string::String {
-        if let Some(assignment_name) = &self.assignment_name {
-            if let Some(data) = &self.data {
-                format!(
-                    "{:<10} = {:<10} {}",
-                    assignment_name,
-                    self.instruction_type.to_string(),
-                    data.to_owned().to_string_for_writing()
-                )
-            } else {
-                format!(
-                    "{:<10} = {:<10}",
-                    assignment_name,
-                    self.instruction_type.to_string()
-                )
+        match self {
+            Instruction::LOAD(location, instruction_data) => {
+                format!("{:<10} = {:<10} {:?}", location, "load", instruction_data)
             }
-        } else {
-            if let Some(data) = &self.data {
-                format!(
-                    "{:<10} {:<10} {}",
-                    "",
-                    self.instruction_type.to_string(),
-                    data.to_owned().to_string_for_writing()
-                )
-            } else {
-                format!("{:<10} {:<10}", "", self.instruction_type.to_string())
-            }
+            Instruction::STACK_VAR(location, instruction_data) => format!(
+                "{:<10} = {:<10} {:?}",
+                location, "stack_var", instruction_data
+            ),
+            _ => panic!(),
         }
+
+        // "todo".to_string()
+        // if let Some(assignment_name) = &self.assignment_name {
+        //     if let Some(data) = &self.data {
+        //         format!(
+        //             "{:<10} = {:<10} {}",
+        //             assignment_name,
+        //             self.instruction_type.to_string(),
+        //             data.to_owned().to_string_for_writing()
+        //         )
+        //     } else {
+        //         format!(
+        //             "{:<10} = {:<10}",
+        //             assignment_name,
+        //             self.instruction_type.to_string()
+        //         )
+        //     }
+        // } else {
+        //     if let Some(data) = &self.data {
+        //         format!(
+        //             "{:<10} {:<10} {}",
+        //             "",
+        //             self.instruction_type.to_string(),
+        //             data.to_owned().to_string_for_writing()
+        //         )
+        //     } else {
+        //         format!("{:<10} {:<10}", "", self.instruction_type.to_string())
+        //     }
+        // }
     }
 }
 
 impl InstructionData {
-    pub fn to_string_for_writing(&mut self) -> std::string::String {
-        match self {
-            InstructionData::INT(i) => format!("i32 {}", i),
-            InstructionData::FLOAT(f) => format!("f32 {}", f),
-            InstructionData::REF(r) => format!("ref {}", r.value),
-            InstructionData::DOUBLE_REF(l, r) => format!("ref {} ref {}", l.value, r.value),
-            InstructionData::INSTRUCTIONS(i) => format!("instructions {}", i),
-        }
-    }
+    // pub fn to_string_for_writing(&mut self) -> std::string::String {
+    //     match self {
+    //         InstructionData::INT(i) => format!("i32 {}", i),
+    //         InstructionData::FLOAT(f) => format!("f32 {}", f),
+    //         InstructionData::REF(r) => format!("ref {}", r.value),
+    //         InstructionData::DOUBLE_REF(l, r) => format!("ref {} ref {}", l.value, r.value),
+    //         InstructionData::INSTRUCTIONS(i) => format!("instructions {:?}", i),
+    //     }
+    // }
 }
 
 impl std::fmt::Display for InstructionType {

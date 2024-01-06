@@ -40,13 +40,13 @@ impl IRParser {
             elapsed.as_millis(),
             elapsed.as_secs()
         );
-        let main_block = Instruction {
-            instruction_type: InstructionType::BLOCK,
-            data: Some(InstructionData::INSTRUCTIONS(instructions)),
-            assignment_name: None,
-        };
-        return Box::new(vec![main_block]);
-        // return instructions;
+        // let main_block = Instruction {
+        //     instruction_type: InstructionType::BLOCK,
+        //     data: Some(InstructionData::INSTRUCTIONS(instructions)),
+        //     assignment_name: None,
+        // };
+        // return Box::new(vec![main_block]);
+        return instructions;
     }
 
     fn write_instruction_to_block(
@@ -123,42 +123,43 @@ impl IRParser {
         when in reality they can be immediate values. we either need to have seperate instructions
         for mixed refs & immediates or just wack them in the same one. idk.
          */
-        let mut left_ref: Ref = Ref {
-            value: "".to_string(),
-        };
-        let mut right_ref: Ref = Ref {
-            value: "".to_string(),
-        };
-        if let Some(left_address_value) = left_address {
-            if let InstructionData::REF(left_address_value_as_ref) = left_address_value {
-                left_ref = left_address_value_as_ref;
-            }
-        }
-        if let Some(right_address_value) = right_address {
-            if let InstructionData::REF(right_address_value_as_ref) = right_address_value {
-                right_ref = right_address_value_as_ref;
-            }
-        }
+        // let mut left_ref: Ref = Ref {
+        //     value: "".to_string(),
+        // };
+        // let mut right_ref: Ref = Ref {
+        //     value: "".to_string(),
+        // };
+        // if let Some(left_address_value) = left_address {
+        //     if let InstructionData::REF(left_address_value_as_ref) = left_address_value {
+        //         left_ref = left_address_value_as_ref;
+        //     }
+        // }
+        // if let Some(right_address_value) = right_address {
+        //     if let InstructionData::REF(right_address_value_as_ref) = right_address_value {
+        //         right_ref = right_address_value_as_ref;
+        //     }
+        // }
 
-        let locals_id = self.locals_counter;
-        self.locals_counter += 1;
+        // let locals_id = self.locals_counter;
+        // self.locals_counter += 1;
 
-        match binary.op {
-            Token::PLUS => self.write_instruction_to_block(
-                Instruction {
-                    instruction_type: InstructionType::ADD,
-                    // todo maybe this should be instruction data not a ref
-                    data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
-                    assignment_name: Some(format!("{:?}", locals_id)),
-                },
-                instructions,
-            ),
-            _ => panic!(),
-        };
-        self.counter += 1;
-        Some(InstructionData::REF(Ref {
-            value: format!("{:?}", locals_id),
-        }))
+        // match binary.op {
+        //     Token::PLUS => self.write_instruction_to_block(
+        //         Instruction {
+        //             instruction_type: InstructionType::ADD,
+        //             // todo maybe this should be instruction data not a ref
+        //             data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
+        //             assignment_name: Some(format!("{:?}", locals_id)),
+        //         },
+        //         instructions,
+        //     ),
+        //     _ => panic!(),
+        // };
+        // self.counter += 1;
+        // Some(InstructionData::REF(Ref {
+        //     value: format!("{:?}", locals_id),
+        // }))
+        None
     }
 
     fn gen_num(
@@ -199,11 +200,15 @@ impl IRParser {
         if let Some(value) = decl.value.as_mut() {
             instruction_data = self.gen_ast(value, instructions);
         }
-        instructions.push(Instruction {
-            instruction_type: InstructionType::STACK_VAR,
-            data: instruction_data,
-            assignment_name: Some(decl.identifier.clone()),
-        });
+        instructions.push(Instruction::STACK_VAR(
+            decl.identifier.clone(),
+            instruction_data,
+        ));
+        // instructions.push(Instruction {
+        //     instruction_type: InstructionType::STACK_VAR,
+        //     data: instruction_data,
+        //     assignment_name: Some(decl.identifier.clone()),
+        // });
         self.counter += 1;
         None
     }
@@ -217,14 +222,20 @@ impl IRParser {
         self.locals_counter += 1;
 
         // do a load
-        instructions.push(Instruction {
-            instruction_type: InstructionType::LOAD,
-            data: Some(InstructionData::REF(Ref {
+        instructions.push(Instruction::LOAD(
+            format!("{:?}", locals_id),
+            Ref {
                 value: identifier.to_string(),
-            })),
-            // todo keep track of locals
-            assignment_name: Some(format!("{:?}", locals_id)),
-        });
+            },
+        ));
+        // instructions.push(Instruction {
+        //     instruction_type: InstructionType::LOAD,
+        //     data: Some(InstructionData::REF(Ref {
+        //         value: identifier.to_string(),
+        //     })),
+        //     // todo keep track of locals
+        //     assignment_name: Some(format!("{:?}", locals_id)),
+        // });
 
         self.counter += 1;
         Some(InstructionData::REF(Ref {
