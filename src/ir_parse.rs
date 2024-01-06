@@ -124,16 +124,7 @@ impl IRParser {
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<InstructionData>) {
-        // todo we need to write this to the block
-        let (instruction, data) = self.gen_ast(stmt, current_block);
-        // if let Some(i) = instruction {
-        //     self.write_instruction_to_block(i, current_block);
-        // } else {
-        //     panic!("no instruction");
-        // }
-        // todo bug: this should probs be the instruction
-        // todo decide if statements should do the wrapping or not
-        (instruction, data)
+        self.gen_ast(stmt, current_block)
     }
 
     fn gen_binary(
@@ -237,7 +228,10 @@ impl IRParser {
         self.block_counter += 1;
         let mut new_block_instructions: Box<Vec<Instruction>> = Box::new(vec![]);
         for mut instruction in &mut block.body {
-            self.gen_ast(&mut instruction, &mut new_block_instructions);
+            let (instruction, _) = self.gen_ast(&mut instruction, &mut new_block_instructions);
+            if let Some(instruction_unwrapped) = instruction {
+                new_block_instructions.push(instruction_unwrapped);
+            }
         }
         let mut new_block = Instruction::BLOCK(format!("{:?}", block_id), new_block_instructions);
         // self.write_instruction_to_block(new_block, current_block);
@@ -251,9 +245,9 @@ impl IRParser {
     ) -> (Option<Instruction>, Option<InstructionData>) {
         let (_, condition_data) = self.gen_ast(&mut iff.condition, current_block);
         if let Some(condition_data_unwrapped) = condition_data {
-            // todo we need the instruction :()
+            // todo uhhh
+            // todo bug: we have an issue here because the statement bit doesn't return teh i
             let (body_instruction, _) = self.gen_ast(&mut iff.body, current_block);
-            debug!(".... uhh {:?}", iff.body);
             if let Some(body_instruction_unwrapped) = body_instruction {
                 return (
                     Some(Instruction::COND_BR(
