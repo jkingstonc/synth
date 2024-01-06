@@ -4,8 +4,7 @@ use log::debug;
 
 use crate::{
     ast::{Binary, Block, Decl, If, Number, ParsedAST, Program},
-    ir::{Instruction, InstructionData, InstructionType, Ref},
-    main,
+    ir::{Instruction, InstructionData, Ref},
     token::Token,
 };
 

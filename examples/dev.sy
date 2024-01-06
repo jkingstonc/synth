@@ -1,3 +1,7 @@
-if 1 {
-    const y = 9
+const x = 99
+const y = x + 3
+
+if y + x {
+    const hello_there = 9
+    const bye = hello_there
 }

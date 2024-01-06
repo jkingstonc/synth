@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use log::debug;
 
-use crate::ir::{Instruction, InstructionData, InstructionType};
+use crate::ir::Instruction;
 
 pub struct IRInterpreter {
     pub counter: usize,

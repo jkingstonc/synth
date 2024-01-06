@@ -15,26 +15,6 @@ const z = x + y + 7
 
 */
 
-#[derive(Debug, Clone, Copy)]
-pub enum InstructionType {
-    NONE,
-    // a block of code (this should always have a label [may change this])
-    BLOCK,
-    // integer literal (untyped as it could be u8, u32 etc)
-    INT,
-    // integer addition
-    ADD,
-    // integer subtraction
-    SUB,
-    // load instruction (todo this should depend on the type?)
-    LOAD,
-    // var instruction
-    // this will allocate a variable some memory on the stack
-    STACK_VAR,
-    // conditional branch (as we are branching to other blocks this should be the last)
-    COND_BR,
-}
-
 // a ref refers to a location in the IR
 #[derive(Debug, Clone)]
 pub struct Ref {
@@ -100,7 +80,12 @@ impl Instruction {
                 format!("{:<10} = {:<10} {:?} + {:?}", location, "add", left, right)
             }
             Instruction::COND_BR(condition, body) => {
-                format!("{:<10}   {:<10} {:?} then {:?}", " ", "if", condition, body)
+                format!(
+                    "{:<10} {:?} then {}",
+                    "if",
+                    condition,
+                    body.to_string_for_writing()
+                )
             }
             _ => panic!(),
         }
@@ -133,23 +118,5 @@ impl Instruction {
         //         format!("{:<10} {:<10}", "", self.instruction_type.to_string())
         //     }
         // }
-    }
-}
-
-impl InstructionData {
-    // pub fn to_string_for_writing(&mut self) -> std::string::String {
-    //     match self {
-    //         InstructionData::INT(i) => format!("i32 {}", i),
-    //         InstructionData::FLOAT(f) => format!("f32 {}", f),
-    //         InstructionData::REF(r) => format!("ref {}", r.value),
-    //         InstructionData::DOUBLE_REF(l, r) => format!("ref {} ref {}", l.value, r.value),
-    //         InstructionData::INSTRUCTIONS(i) => format!("instructions {:?}", i),
-    //     }
-    // }
-}
-
-impl std::fmt::Display for InstructionType {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{:?}", self)
     }
 }
