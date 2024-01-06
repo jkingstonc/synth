@@ -3,8 +3,8 @@ use std::time::Instant;
 use log::debug;
 
 use crate::ast::{
-    Assign, Binary, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, LhsAccess,
-    Number, ParsedAST, Program,
+    Assign, Binary, Block, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, If,
+    LhsAccess, Number, ParsedAST, Program,
 };
 use crate::token::Token;
 
@@ -38,11 +38,29 @@ impl Parser<'_> {
     fn statement(&self, current: &mut usize) -> ParsedAST {
         match self.peek(&current) {
             // Token::LCURLY => self.block(current),
-            // Token::IF => self.if_stmt(current),
+            Token::IF => self.if_stmt(current),
             // Token::FOR => self.for_stmt(current),
             // Token::RET => self.ret(current),
             _ => ParsedAST::STMT(Box::new(self.expression(current))),
         }
+    }
+
+    fn if_stmt(&self, current: &mut usize) -> ParsedAST {
+        self.consume(current); // consume the if
+        let condition = Box::new(self.expression(current));
+        let body = Box::new(self.statement(current));
+        let mut else_body: Option<Box<ParsedAST>> = None;
+
+        if !self.end(current) && self.expecting(Token::ELSE, current) {
+            self.consume(current); // consume the else
+            else_body = Some(Box::new(self.statement(current)));
+        }
+
+        return ParsedAST::IF(If {
+            condition,
+            body,
+            else_body,
+        });
     }
 
     fn expression(&self, current: &mut usize) -> ParsedAST {
@@ -390,9 +408,22 @@ impl Parser<'_> {
             //     })
             // }
             // todo
-            // Token::LCURLY => self.block(current),
+            Token::LCURLY => self.block(current),
             _ => panic!(),
         }
+    }
+
+    fn block(&self, current: &mut usize) -> ParsedAST {
+        self.consume(current);
+        let mut body: Vec<ParsedAST> = vec![];
+        while !self.end(current) && !self.expecting(Token::RCURLY, current) {
+            body.push(self.statement(current));
+        }
+        self.consume(current);
+        return ParsedAST::BLOCK(Block {
+            new_scope: true,
+            body,
+        });
     }
 
     fn peek(&self, current: &usize) -> &Token {

@@ -3,7 +3,7 @@ use std::{time::Instant, vec};
 use log::debug;
 
 use crate::{
-    ast::{Binary, Decl, Number, ParsedAST, Program},
+    ast::{Binary, Block, Decl, If, Number, ParsedAST, Program},
     ir::{Instruction, InstructionData, InstructionType, Ref},
     main,
     token::Token,
@@ -11,6 +11,7 @@ use crate::{
 
 pub struct IRParser {
     pub counter: usize,
+    pub block_counter: usize,
     pub locals_counter: usize,
 }
 
@@ -77,8 +78,8 @@ impl IRParser {
             ParsedAST::IDENTIFIER(identifier) => self.gen_identifier(identifier, current_block),
             // ParsedAST::DIRECTIVE(directive) => self.type_check_directive(directive),
             // ParsedAST::PROGRAM(program) => self.type_check_program(program),
-            // ParsedAST::BLOCK(block) => self.type_check_block(block),
-            // ParsedAST::IF(iff) => self.type_check_if(iff),
+            ParsedAST::BLOCK(block) => self.gen_block(block, current_block),
+            ParsedAST::IF(iff) => self.gen_if(iff, current_block),
             // ParsedAST::FOR(forr) => self.type_check_for(forr),
             // ParsedAST::RET(ret) => self.type_check_ret(ret),
             // ParsedAST::DECL(decl) => self.type_check_decl(decl),
@@ -156,7 +157,6 @@ impl IRParser {
             _ => panic!(),
         };
         let r: InstructionData;
-        debug!(".... umm {:?}", right_address);
         match right_address {
             Some(right) => {
                 r = right;
@@ -239,6 +239,32 @@ impl IRParser {
         //     assignment_name: Some(decl.identifier.clone()),
         // });
         self.counter += 1;
+        None
+    }
+
+    fn gen_block(
+        &mut self,
+        block: &mut Block,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> Option<InstructionData> {
+        let block_id = self.block_counter;
+        self.block_counter += 1;
+        let mut new_block_instructions: Box<Vec<Instruction>> = Box::new(vec![]);
+        for mut instruction in &mut block.body {
+            self.gen_ast(&mut instruction, &mut new_block_instructions);
+        }
+        let mut new_block = Instruction::BLOCK(format!("{:?}", block_id), new_block_instructions);
+        self.write_instruction_to_block(new_block, current_block);
+        None
+    }
+
+    fn gen_if(
+        &mut self,
+        iff: &mut If,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> Option<InstructionData> {
+        self.gen_ast(&mut iff.condition, current_block);
+        self.gen_ast(&mut iff.body, current_block);
         None
     }
 

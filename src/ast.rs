@@ -36,6 +36,13 @@ pub struct Decl<'a> {
 }
 
 #[derive(Debug)]
+pub struct If<'a> {
+    pub condition: Box<ParsedAST<'a>>,
+    pub body: Box<ParsedAST<'a>>,
+    pub else_body: Option<Box<ParsedAST<'a>>>,
+}
+
+#[derive(Debug)]
 pub struct LhsAccess<'a> {
     pub left: Box<ParsedAST<'a>>,
     // todo this should probably be an identifier?
@@ -59,14 +66,20 @@ pub struct ExpressionInstruction<'a> {
     pub rhs: Box<ParsedAST<'a>>,
 }
 
+#[derive(Debug)]
+pub struct Block<'a> {
+    pub new_scope: bool,
+    pub body: Vec<ParsedAST<'a>>,
+}
+
 // todo this should be a struct so we get positional information
 #[derive(Debug)]
 pub enum ParsedAST<'a> {
     PROGRAM(Program<'a>),
     STMT(Box<ParsedAST<'a>>),
     EXPRESSION_INSTRUCTION(ExpressionInstruction<'a>),
-    // BLOCK(Block<'a>),
-    // IF(If<'a>),
+    BLOCK(Block<'a>),
+    IF(If<'a>),
     // FOR(For<'a>),
     // RET(Option<Box<ParsedAST<'a>>>),
     DECL(Decl<'a>),
