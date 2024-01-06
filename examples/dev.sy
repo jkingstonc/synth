@@ -1,5 +1,8 @@
 
 const x = 111
-if x {
+{
     const y = 22
+}
+if x {
+    const z = 99
 }
