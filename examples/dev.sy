@@ -1,8 +1,7 @@
 
-const x = 111
-{
-    const y = 22
-}
-if x {
-    const z = 99
+
+const x = 123
+
+if x + 3 + 5 {
+    const y = 9
 }

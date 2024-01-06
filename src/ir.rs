@@ -75,7 +75,8 @@ pub enum Instruction {
     // so can be assigned multiple times (not a SSA in registers)
     STACK_VAR(std::string::String, Option<InstructionData>),
     // conditional branch (as we are branching to other blocks this should be the last)
-    // COND_BR,
+    // first arg is the condition, second is the body, third is the else
+    COND_BR(InstructionData, Box<Instruction>),
 }
 
 impl Instruction {
@@ -97,6 +98,9 @@ impl Instruction {
             ),
             Instruction::ADD(location, left, right) => {
                 format!("{:<10} = {:<10} {:?} + {:?}", location, "add", left, right)
+            }
+            Instruction::COND_BR(condition, body) => {
+                format!("{:<10}   {:<10} {:?} then {:?}", " ", "if", condition, body)
             }
             _ => panic!(),
         }

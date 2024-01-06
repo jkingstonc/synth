@@ -37,8 +37,12 @@ impl IRParser {
 
         let mut main_block_instructions: Box<Vec<Instruction>> = Box::new(vec![]);
 
-        self.gen_ast(ast.as_mut(), &mut main_block_instructions);
-
+        let (instruction, data) = self.gen_ast(ast.as_mut(), &mut main_block_instructions);
+        // if let Some(instruction_unwrapped) = instruction {
+        //     self.write_instruction_to_block(instruction_unwrapped, &mut main_block_instructions);
+        // } else {
+        //     panic!("expected instruction");
+        // }
         let elapsed = now.elapsed();
         debug!(
             "ir parsing time elapsed {:.2?}ms ({:.2?}s).",
@@ -68,7 +72,7 @@ impl IRParser {
         ast: &mut ParsedAST,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> (Option<Instruction>, Option<InstructionData>) {
         match ast {
             ParsedAST::PROGRAM(program) => self.gen_program(program, current_block),
             ParsedAST::STMT(stmt) => self.gen_stmt(stmt, current_block),
@@ -102,11 +106,16 @@ impl IRParser {
         program: &mut Program,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> (Option<Instruction>, Option<InstructionData>) {
         for item in program.body.iter_mut() {
-            self.gen_ast(item, current_block);
+            let (instruction, _) = self.gen_ast(item, current_block);
+            if let Some(instruction_unwrapped) = instruction {
+                self.write_instruction_to_block(instruction_unwrapped, current_block);
+            } else {
+                panic!("expected instruction");
+            }
         }
-        None
+        (None, None)
     }
 
     fn gen_stmt(
@@ -114,8 +123,17 @@ impl IRParser {
         stmt: &mut Box<ParsedAST>,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
-        self.gen_ast(stmt, current_block)
+    ) -> (Option<Instruction>, Option<InstructionData>) {
+        // todo we need to write this to the block
+        let (instruction, data) = self.gen_ast(stmt, current_block);
+        // if let Some(i) = instruction {
+        //     self.write_instruction_to_block(i, current_block);
+        // } else {
+        //     panic!("no instruction");
+        // }
+        // todo bug: this should probs be the instruction
+        // todo decide if statements should do the wrapping or not
+        (instruction, data)
     }
 
     fn gen_binary(
@@ -123,31 +141,9 @@ impl IRParser {
         binary: &mut Binary,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
-        let left_address = self.gen_ast(&mut binary.left, current_block);
-        let right_address = self.gen_ast(&mut binary.right, current_block);
-
-        /*
-        TODO: this needs reworking, currently were assuming that the left & right are references
-        when in reality they can be immediate values. we either need to have seperate instructions
-        for mixed refs & immediates or just wack them in the same one. idk.
-         */
-        // let mut left_ref: Ref = Ref {
-        //     value: "".to_string(),
-        // };
-        // let mut right_ref: Ref = Ref {
-        //     value: "".to_string(),
-        // };
-        // if let Some(left_address_value) = left_address {
-        //     if let InstructionData::REF(left_address_value_as_ref) = left_address_value {
-        //         left_ref = left_address_value_as_ref;
-        //     }
-        // }
-        // if let Some(right_address_value) = right_address {
-        //     if let InstructionData::REF(right_address_value_as_ref) = right_address_value {
-        //         right_ref = right_address_value_as_ref;
-        //     }
-        // }
+    ) -> (Option<Instruction>, Option<InstructionData>) {
+        let (_, left_address) = self.gen_ast(&mut binary.left, current_block);
+        let (_, right_address) = self.gen_ast(&mut binary.right, current_block);
 
         let l: InstructionData;
         match left_address {
@@ -168,22 +164,21 @@ impl IRParser {
         self.locals_counter += 1;
 
         match binary.op {
-            Token::PLUS => self.write_instruction_to_block(
-                Instruction::ADD(format!("{:?}", locals_id), l, r),
-                current_block, // Instruction {
-                               //     instruction_type: InstructionType::ADD,
-                               //     // todo maybe this should be instruction data not a ref
-                               //     data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
-                               //     assignment_name: Some(format!("{:?}", locals_id)),
-                               // },
-                               // instructions,
-            ),
+            Token::PLUS => {
+                self.write_instruction_to_block(
+                    Instruction::ADD(format!("{:?}", locals_id), l, r),
+                    current_block,
+                );
+                (
+                    // Some(Instruction::ADD(format!("{:?}", locals_id), l, r)),
+                    None,
+                    Some(InstructionData::REF(Ref {
+                        value: format!("{:?}", locals_id),
+                    })),
+                )
+            }
             _ => panic!(),
-        };
-        // self.counter += 1;
-        Some(InstructionData::REF(Ref {
-            value: format!("{:?}", locals_id),
-        }))
+        }
     }
 
     fn gen_num(
@@ -191,27 +186,11 @@ impl IRParser {
         num: &mut Number,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> (Option<Instruction>, Option<InstructionData>) {
         self.counter += 1;
         match num {
-            Number::INTEGER(i) => Some(InstructionData::INT(i.clone())),
-            Number::FLOAT(f) => Some(InstructionData::FLOAT(f.clone())),
-            // Number::INTEGER(i) => self.write_instruction_to_block(
-            //     Instruction {
-            //         instruction_type: InstructionType::INT,
-            //         data: Some(InstructionData::INT(*i)),
-            //         assignment_name: None,
-            //     },
-            //     instructions,
-            // ),
-            // Number::FLOAT(f) => self.write_instruction_to_block(
-            //     Instruction {
-            //         instruction_type: InstructionType::INT,
-            //         data: Some(InstructionData::FLOAT(*f)),
-            //         assignment_name: None,
-            //     },
-            //     instructions,
-            // ),
+            Number::INTEGER(i) => (None, Some(InstructionData::INT(i.clone()))),
+            Number::FLOAT(f) => (None, Some(InstructionData::FLOAT(f.clone()))),
         }
     }
 
@@ -220,33 +199,40 @@ impl IRParser {
         decl: &mut Decl,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> (Option<Instruction>, Option<InstructionData>) {
         // first generate the decl value
         let mut instruction_data = None;
         if let Some(value) = decl.value.as_mut() {
-            instruction_data = self.gen_ast(value, current_block);
+            let (_, data) = self.gen_ast(value, current_block);
+            instruction_data = data;
         }
 
         // match current_block
         // let Instruction::BLOCK(_, instructions) = current_block;
-        current_block.push(Instruction::STACK_VAR(
-            decl.identifier.clone(),
-            instruction_data,
-        ));
+        // current_block.push(Instruction::STACK_VAR(
+        //     decl.identifier.clone(),
+        //     instruction_data,
+        // ));
         // instructions.push(Instruction {
         //     instruction_type: InstructionType::STACK_VAR,
         //     data: instruction_data,
         //     assignment_name: Some(decl.identifier.clone()),
         // });
         self.counter += 1;
-        None
+        (
+            Some(Instruction::STACK_VAR(
+                decl.identifier.clone(),
+                instruction_data,
+            )),
+            None,
+        )
     }
 
     fn gen_block(
         &mut self,
         block: &mut Block,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> (Option<Instruction>, Option<InstructionData>) {
         let block_id = self.block_counter;
         self.block_counter += 1;
         let mut new_block_instructions: Box<Vec<Instruction>> = Box::new(vec![]);
@@ -254,18 +240,36 @@ impl IRParser {
             self.gen_ast(&mut instruction, &mut new_block_instructions);
         }
         let mut new_block = Instruction::BLOCK(format!("{:?}", block_id), new_block_instructions);
-        self.write_instruction_to_block(new_block, current_block);
-        None
+        // self.write_instruction_to_block(new_block, current_block);
+        (Some(new_block), None)
     }
 
     fn gen_if(
         &mut self,
         iff: &mut If,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
-        self.gen_ast(&mut iff.condition, current_block);
-        self.gen_ast(&mut iff.body, current_block);
-        None
+    ) -> (Option<Instruction>, Option<InstructionData>) {
+        let (_, condition_data) = self.gen_ast(&mut iff.condition, current_block);
+        if let Some(condition_data_unwrapped) = condition_data {
+            // todo we need the instruction :()
+            let (body_instruction, _) = self.gen_ast(&mut iff.body, current_block);
+            debug!(".... uhh {:?}", iff.body);
+            if let Some(body_instruction_unwrapped) = body_instruction {
+                return (
+                    Some(Instruction::COND_BR(
+                        condition_data_unwrapped,
+                        Box::new(body_instruction_unwrapped),
+                    )),
+                    None,
+                );
+            } else {
+                panic!("body requires body");
+            }
+        } else {
+            panic!("conditional branch requires condition");
+        }
+        // todo
+        (None, None)
     }
 
     fn gen_identifier(
@@ -273,30 +277,32 @@ impl IRParser {
         identifier: &mut std::string::String,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> (Option<Instruction>, Option<InstructionData>) {
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
 
-        // do a load
-        // let Instruction::BLOCK(_, instructions) = current_block;
-        current_block.push(Instruction::LOAD(
-            format!("{:?}", locals_id),
-            Ref {
-                value: identifier.to_string(),
-            },
-        ));
-        // instructions.push(Instruction {
-        //     instruction_type: InstructionType::LOAD,
-        //     data: Some(InstructionData::REF(Ref {
-        //         value: identifier.to_string(),
-        //     })),
-        //     // todo keep track of locals
-        //     assignment_name: Some(format!("{:?}", locals_id)),
-        // });
-
+        // todo do we need to do a load here?
+        self.write_instruction_to_block(
+            Instruction::LOAD(
+                format!("{:?}", locals_id),
+                Ref {
+                    value: identifier.to_string(),
+                },
+            ),
+            current_block,
+        );
         self.counter += 1;
-        Some(InstructionData::REF(Ref {
-            value: format!("{:?}", locals_id),
-        }))
+        (
+            // Some(Instruction::LOAD(
+            //     format!("{:?}", locals_id),
+            //     Ref {
+            //         value: identifier.to_string(),
+            //     },
+            // )),
+            None,
+            Some(InstructionData::REF(Ref {
+                value: format!("{:?}", locals_id),
+            })),
+        )
     }
 }
