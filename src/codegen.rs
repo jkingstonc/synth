@@ -65,6 +65,8 @@ impl X86CodeGenerator {
     }
 
     fn generate_block(&mut self, label: &String, block: &Box<Vec<Instruction>>) {
+        self.str_buffer += label;
+        self.str_buffer += ":\n";
         for instruction in block.iter() {
             self.generate_instruction(instruction);
         }
