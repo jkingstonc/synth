@@ -86,12 +86,11 @@ fn main() {
     // }
 
     // tmp
-    // let mut ir_interpreter = ir_interpret::IRInterpreter {
-    //     counter: 0,
-    //     instructions: instructions,
-    //     variables_map: HashMap::new(),
-    // };
-    // ir_interpreter.execute();
+    let mut ir_interpreter = ir_interpret::IRInterpreter {
+        counter: 0,
+        variables_map: HashMap::new(),
+    };
+    ir_interpreter.execute(main_block);
 
     // optimization stage
 

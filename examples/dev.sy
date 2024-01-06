@@ -1,7 +1,3 @@
-const x = 99
-const y = x + 3
+const x = 2
 
-if y + x {
-    const hello_there = 9
-    const bye = hello_there
-}
+const y = x + 3
