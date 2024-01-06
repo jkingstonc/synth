@@ -1,4 +1,4 @@
-use std::time::Instant;
+use std::{time::Instant, vec};
 
 use log::debug;
 
@@ -29,11 +29,15 @@ pub struct IRParser {
 //
 
 impl IRParser {
-    pub fn parse(&mut self, mut ast: Box<ParsedAST>) -> Box<Vec<Instruction>> {
+    pub fn parse(&mut self, mut ast: Box<ParsedAST>) -> Instruction {
         let mut instructions: Box<Vec<Instruction>> = Box::new(vec![]);
 
         let now = Instant::now();
-        self.gen_ast(ast.as_mut(), &mut instructions);
+
+        let mut main_block_instructions: Box<Vec<Instruction>> = Box::new(vec![]);
+
+        self.gen_ast(ast.as_mut(), &mut main_block_instructions);
+
         let elapsed = now.elapsed();
         debug!(
             "ir parsing time elapsed {:.2?}ms ({:.2?}s).",
@@ -46,7 +50,7 @@ impl IRParser {
         //     assignment_name: None,
         // };
         // return Box::new(vec![main_block]);
-        return instructions;
+        return Instruction::BLOCK("main".to_owned(), main_block_instructions);
     }
 
     fn write_instruction_to_block(
@@ -61,15 +65,16 @@ impl IRParser {
     fn gen_ast(
         &mut self,
         ast: &mut ParsedAST,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
         match ast {
-            ParsedAST::PROGRAM(program) => self.gen_program(program, instructions),
-            ParsedAST::STMT(stmt) => self.gen_stmt(stmt, instructions),
-            ParsedAST::BINARY(binary) => self.gen_binary(binary, instructions),
-            ParsedAST::NUMBER(num) => self.gen_num(num, instructions),
-            ParsedAST::DECL(decl) => self.gen_decl(decl, instructions),
-            ParsedAST::IDENTIFIER(identifier) => self.gen_identifier(identifier, instructions),
+            ParsedAST::PROGRAM(program) => self.gen_program(program, current_block),
+            ParsedAST::STMT(stmt) => self.gen_stmt(stmt, current_block),
+            ParsedAST::BINARY(binary) => self.gen_binary(binary, current_block),
+            ParsedAST::NUMBER(num) => self.gen_num(num, current_block),
+            ParsedAST::DECL(decl) => self.gen_decl(decl, current_block),
+            ParsedAST::IDENTIFIER(identifier) => self.gen_identifier(identifier, current_block),
             // ParsedAST::DIRECTIVE(directive) => self.type_check_directive(directive),
             // ParsedAST::PROGRAM(program) => self.type_check_program(program),
             // ParsedAST::BLOCK(block) => self.type_check_block(block),
@@ -94,10 +99,11 @@ impl IRParser {
     fn gen_program(
         &mut self,
         program: &mut Program,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
         for item in program.body.iter_mut() {
-            self.gen_ast(item, instructions);
+            self.gen_ast(item, current_block);
         }
         None
     }
@@ -105,18 +111,20 @@ impl IRParser {
     fn gen_stmt(
         &mut self,
         stmt: &mut Box<ParsedAST>,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
-        self.gen_ast(stmt, instructions)
+        self.gen_ast(stmt, current_block)
     }
 
     fn gen_binary(
         &mut self,
         binary: &mut Binary,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
-        let left_address = self.gen_ast(&mut binary.left, instructions);
-        let right_address = self.gen_ast(&mut binary.right, instructions);
+        let left_address = self.gen_ast(&mut binary.left, current_block);
+        let right_address = self.gen_ast(&mut binary.right, current_block);
 
         /*
         TODO: this needs reworking, currently were assuming that the left & right are references
@@ -165,7 +173,8 @@ impl IRParser {
     fn gen_num(
         &mut self,
         num: &mut Number,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
         self.counter += 1;
         match num {
@@ -193,14 +202,18 @@ impl IRParser {
     fn gen_decl(
         &mut self,
         decl: &mut Decl,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
         // first generate the decl value
         let mut instruction_data = None;
         if let Some(value) = decl.value.as_mut() {
-            instruction_data = self.gen_ast(value, instructions);
+            instruction_data = self.gen_ast(value, current_block);
         }
-        instructions.push(Instruction::STACK_VAR(
+
+        // match current_block
+        // let Instruction::BLOCK(_, instructions) = current_block;
+        current_block.push(Instruction::STACK_VAR(
             decl.identifier.clone(),
             instruction_data,
         ));
@@ -216,13 +229,15 @@ impl IRParser {
     fn gen_identifier(
         &mut self,
         identifier: &mut std::string::String,
-        instructions: &mut Box<Vec<Instruction>>,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
     ) -> Option<InstructionData> {
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
 
         // do a load
-        instructions.push(Instruction::LOAD(
+        // let Instruction::BLOCK(_, instructions) = current_block;
+        current_block.push(Instruction::LOAD(
             format!("{:?}", locals_id),
             Ref {
                 value: identifier.to_string(),

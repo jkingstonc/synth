@@ -58,15 +58,16 @@ fn main() {
         counter: 0,
         locals_counter: 0,
     };
-    let mut instructions = ir_parser.parse(ast);
+    let mut main_block = ir_parser.parse(ast);
     if let Some(write_ir) = args.write_ir {
         if write_ir {
             let f: File = File::create("./build/build.sir").expect("unable to create file");
             let mut writer = BufWriter::new(f);
-            for instruction in instructions.iter() {
-                write!(writer, "{}\n", instruction.to_string_for_writing())
-                    .expect("unable to write");
-            }
+            // for instruction in instructions.iter() {
+            //     write!(writer, "{}\n", instruction.to_string_for_writing())
+            //         .expect("unable to write");
+            // }
+            write!(writer, "{}\n", main_block.to_string_for_writing()).expect("unable to write");
         }
     }
 
@@ -84,12 +85,12 @@ fn main() {
     // }
 
     // tmp
-    let mut ir_interpreter = ir_interpret::IRInterpreter {
-        counter: 0,
-        instructions: instructions,
-        variables_map: HashMap::new(),
-    };
-    ir_interpreter.execute();
+    // let mut ir_interpreter = ir_interpret::IRInterpreter {
+    //     counter: 0,
+    //     instructions: instructions,
+    //     variables_map: HashMap::new(),
+    // };
+    // ir_interpreter.execute();
 
     // optimization stage
 

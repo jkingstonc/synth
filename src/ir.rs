@@ -42,11 +42,6 @@ pub struct Ref {
 }
 
 #[derive(Debug, Clone)]
-pub struct Block {
-    instructions: Vec<Instruction>,
-}
-
-#[derive(Debug, Clone)]
 pub struct Bin {
     pub left: InstructionData,
     pub right: InstructionData,
@@ -67,7 +62,7 @@ pub enum Instruction {
     // // this is the value the struction assigns (i.e. %0 etc)
     // pub assignment_name: Option<std::string::String>,
     NONE,
-    BLOCK(std::string::String, Block),
+    BLOCK(std::string::String, Box<Vec<Instruction>>),
     // integer addition
     ADD(std::string::String, Bin),
     // integer subtraction
@@ -86,6 +81,13 @@ pub enum Instruction {
 impl Instruction {
     pub fn to_string_for_writing(&self) -> std::string::String {
         match self {
+            Instruction::BLOCK(location, instruction_data) => {
+                let mut s = "".to_string();
+                for instruction in instruction_data.to_vec() {
+                    s = s + "    " + &instruction.to_string_for_writing() + "\n";
+                }
+                format!("{:<10}\n{:<10}", location, s)
+            }
             Instruction::LOAD(location, instruction_data) => {
                 format!("{:<10} = {:<10} {:?}", location, "load", instruction_data)
             }
