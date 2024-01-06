@@ -67,21 +67,21 @@ impl Instruction {
                 for instruction in instruction_data.to_vec() {
                     s = s + &instruction.to_string_for_writing() + "\n";
                 }
-                format!("\n{:<10}\n{:<10}\n", location.to_string() + ":", s)
+                format!("\n{:<15}\n{:<10}\n", location.to_string() + ":", s)
             }
             Instruction::LOAD(location, instruction_data) => {
-                format!("{:<10} = {:<10} {:?}", location, "load", instruction_data)
+                format!("{:<15} = {:<10} {:?}", location, "load", instruction_data)
             }
             Instruction::STACK_VAR(location, instruction_data) => format!(
-                "{:<10} = {:<10} {:?}",
+                "{:<15} = {:<10} {:?}",
                 location, "stack_var", instruction_data
             ),
             Instruction::ADD(location, left, right) => {
-                format!("{:<10} = {:<10} {:?} + {:?}", location, "add", left, right)
+                format!("{:<15} = {:<10} {:?} + {:?}", location, "add", left, right)
             }
             Instruction::COND_BR(condition, body) => {
                 format!(
-                    "{:<10} {:?} then {}",
+                    "{:<15} {:?} then {}",
                     "if",
                     condition,
                     body.to_string_for_writing()
