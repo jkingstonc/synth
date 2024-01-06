@@ -4,11 +4,13 @@ use log::debug;
 
 use crate::{
     ast::{Binary, Block, Decl, If, Number, ParsedAST, Program},
+    compiler::CompilerOptions,
     ir::{Instruction, InstructionData, Ref},
     token::Token,
 };
 
-pub struct IRParser {
+pub struct IRParser<'a> {
+    pub compiler_options: &'a CompilerOptions,
     pub counter: usize,
     pub block_counter: usize,
     pub locals_counter: usize,
@@ -28,7 +30,7 @@ pub struct IRParser {
 //
 //
 
-impl IRParser {
+impl IRParser<'_> {
     pub fn parse(&mut self, mut ast: Box<ParsedAST>) -> Instruction {
         let mut instructions: Box<Vec<Instruction>> = Box::new(vec![]);
 
@@ -155,17 +157,44 @@ impl IRParser {
 
         match binary.op {
             Token::PLUS => {
-                self.write_instruction_to_block(
-                    Instruction::ADD(format!("{:?}", locals_id), l, r),
-                    current_block,
-                );
-                (
-                    // Some(Instruction::ADD(format!("{:?}", locals_id), l, r)),
-                    None,
-                    Some(InstructionData::REF(Ref {
-                        value: format!("{:?}", locals_id),
-                    })),
-                )
+                // todo enable optimisation
+
+                let mut should_optimize = true;
+                match l {
+                    InstructionData::INT(_) => {}
+                    _ => should_optimize = false,
+                };
+                match r {
+                    InstructionData::INT(_) => {}
+                    _ => should_optimize = false,
+                };
+
+                if self.compiler_options.optimization > 0 && should_optimize {
+                    let mut lhs_value = 0;
+                    let mut rhs_value = 0;
+                    match l {
+                        InstructionData::INT(i) => lhs_value = i,
+                        _ => todo!("unsupported type for add optimization"),
+                    };
+                    match r {
+                        InstructionData::INT(i) => rhs_value = i,
+                        _ => todo!("unsupported type for add optimization"),
+                    };
+
+                    (None, Some(InstructionData::INT(lhs_value + rhs_value)))
+                } else {
+                    self.write_instruction_to_block(
+                        Instruction::ADD(format!("{:?}", locals_id), l, r),
+                        current_block,
+                    );
+                    (
+                        // Some(Instruction::ADD(format!("{:?}", locals_id), l, r)),
+                        None,
+                        Some(InstructionData::REF(Ref {
+                            value: format!("{:?}", locals_id),
+                        })),
+                    )
+                }
             }
             _ => panic!(),
         }

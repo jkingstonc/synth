@@ -3,10 +3,14 @@ use std::{collections::HashMap, fs::File, io::BufWriter, io::Write, time::Instan
 use clap::Parser;
 use log::{debug, error, info};
 
-use crate::optimize::{GeneralPassIROptimizer, IROptimizer};
+use crate::{
+    compiler::CompilerOptions,
+    optimize::{GeneralPassIROptimizer, IROptimizer},
+};
 
 mod ast;
 mod codegen;
+mod compiler;
 mod comptime;
 mod ir;
 mod ir_interpret;
@@ -44,6 +48,8 @@ fn main() {
 
     let args = Args::parse();
 
+    let compiler_options = CompilerOptions { optimization: 1 };
+
     let source = std::fs::read_to_string(args.file).expect("unable to read source file test.trove");
 
     let mut lexer = lex::Lexer::new();
@@ -55,6 +61,7 @@ fn main() {
     let ast = parser.parse();
 
     let mut ir_parser = ir_parse::IRParser {
+        compiler_options: &compiler_options,
         counter: 0,
         block_counter: 0,
         locals_counter: 0,
@@ -87,6 +94,7 @@ fn main() {
 
     // tmp
     let mut ir_interpreter = ir_interpret::IRInterpreter {
+        compiler_options: &compiler_options,
         counter: 0,
         variables_map: HashMap::new(),
     };
