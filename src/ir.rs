@@ -41,11 +41,11 @@ pub struct Ref {
     pub value: std::string::String,
 }
 
-#[derive(Debug, Clone)]
-pub struct Bin {
-    pub left: InstructionData,
-    pub right: InstructionData,
-}
+// #[derive(Debug, Clone)]
+// pub struct Bin {
+//     pub left: InstructionData,
+//     pub right: InstructionData,
+// }
 
 #[derive(Debug, Clone)]
 pub enum InstructionData {
@@ -64,9 +64,9 @@ pub enum Instruction {
     NONE,
     BLOCK(std::string::String, Box<Vec<Instruction>>),
     // integer addition
-    ADD(std::string::String, Bin),
+    ADD(std::string::String, InstructionData, InstructionData),
     // integer subtraction
-    SUB(std::string::String, Bin),
+    SUB(std::string::String, InstructionData, InstructionData),
     // load instruction (todo this should depend on the type?)
     LOAD(std::string::String, Ref),
     // var instruction
@@ -95,6 +95,9 @@ impl Instruction {
                 "{:<10} = {:<10} {:?}",
                 location, "stack_var", instruction_data
             ),
+            Instruction::ADD(location, left, right) => {
+                format!("{:<10} = {:<10} {:?} + {:?}", location, "add", left, right)
+            }
             _ => panic!(),
         }
 

@@ -5,4 +5,4 @@ const z = 789
 const i = x
 const j = y
 
-const hello = i + j + x
+const hello = i + j + z

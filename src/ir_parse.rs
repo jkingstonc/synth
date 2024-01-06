@@ -148,26 +148,42 @@ impl IRParser {
         //     }
         // }
 
-        // let locals_id = self.locals_counter;
-        // self.locals_counter += 1;
+        let l: InstructionData;
+        match left_address {
+            Some(left) => {
+                l = left;
+            }
+            _ => panic!(),
+        };
+        let r: InstructionData;
+        debug!(".... umm {:?}", right_address);
+        match right_address {
+            Some(right) => {
+                r = right;
+            }
+            _ => panic!(),
+        };
 
-        // match binary.op {
-        //     Token::PLUS => self.write_instruction_to_block(
-        //         Instruction {
-        //             instruction_type: InstructionType::ADD,
-        //             // todo maybe this should be instruction data not a ref
-        //             data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
-        //             assignment_name: Some(format!("{:?}", locals_id)),
-        //         },
-        //         instructions,
-        //     ),
-        //     _ => panic!(),
-        // };
+        let locals_id = self.locals_counter;
+        self.locals_counter += 1;
+
+        match binary.op {
+            Token::PLUS => self.write_instruction_to_block(
+                Instruction::ADD(format!("{:?}", locals_id), l, r),
+                current_block, // Instruction {
+                               //     instruction_type: InstructionType::ADD,
+                               //     // todo maybe this should be instruction data not a ref
+                               //     data: Some(InstructionData::DOUBLE_REF(left_ref, right_ref)),
+                               //     assignment_name: Some(format!("{:?}", locals_id)),
+                               // },
+                               // instructions,
+            ),
+            _ => panic!(),
+        };
         // self.counter += 1;
-        // Some(InstructionData::REF(Ref {
-        //     value: format!("{:?}", locals_id),
-        // }))
-        None
+        Some(InstructionData::REF(Ref {
+            value: format!("{:?}", locals_id),
+        }))
     }
 
     fn gen_num(
