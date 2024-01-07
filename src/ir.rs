@@ -42,6 +42,7 @@ pub enum Instruction {
     // // this is the value the struction assigns (i.e. %0 etc)
     // pub assignment_name: Option<std::string::String>,
     NONE,
+    PROGRAM(Box<Vec<Instruction>>),
     BLOCK(std::string::String, Box<Vec<Instruction>>),
     // integer addition
     ADD(std::string::String, InstructionData, InstructionData),
@@ -68,6 +69,13 @@ impl Instruction {
                     s = s + &instruction.to_string_for_writing() + "\n";
                 }
                 format!("\n{:<15}\n{:<10}\n", location.to_string() + ":", s)
+            }
+            Instruction::PROGRAM(instructions) => {
+                let mut s = "".to_string();
+                for instruction in instructions.to_vec() {
+                    s = s + &instruction.to_string_for_writing() + "\n";
+                }
+                s
             }
             Instruction::LOAD(location, instruction_data) => {
                 format!("{:<15} = {:<10} {:?}", location, "load", instruction_data)

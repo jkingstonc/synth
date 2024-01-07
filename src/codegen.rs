@@ -1,7 +1,7 @@
 use log::{debug, error, info, warn};
-use std::fs;
 use std::io::Write;
 use std::time::Instant;
+use std::{fs, process::Command};
 
 use crate::ir::{Instruction, InstructionData};
 pub struct X86CodeGenerator {
@@ -12,8 +12,6 @@ impl X86CodeGenerator {
     pub fn generate(&mut self, instruction: &Instruction) {
         let now = Instant::now();
 
-        self.generate_instruction(instruction);
-
         match fs::create_dir_all("./build") {
             Ok(_) => {}
             Err(err) => {
@@ -21,6 +19,18 @@ impl X86CodeGenerator {
                 panic!("failed to create build directory /build {}.", err);
             }
         }
+
+        self.str_buffer += "section    .text\nglobal _start\n_start:\n";
+        // self.generate_instruction(instruction);
+        self.str_buffer += "\nsection    .data\nmsg    db \"hello, world!\"\nlen    equ $ -msg";
+
+        // win32
+        // nasm -f wind32 -o build.o build.asm
+        // ld -m i386pe -o hello hello.o
+
+        // *nix
+        // nasm -f elf32 -o build.o build.asm
+        // ld -m elf_i386 -o hello hello.o
 
         let mut file = match fs::File::create("./build/build.asm") {
             Err(err) => {
@@ -38,6 +48,15 @@ impl X86CodeGenerator {
             Ok(file) => {}
         }
 
+        Command::new("nasm")
+            .args(["-f", "win32", "-o", "./build/build.o", "./build/build.asm"])
+            .spawn()
+            .expect("failed to assemble ./build/build.asm");
+        Command::new("ld")
+            .args(["-m", "i386pe", "-o", "./build/build.exe", "./build/build.o"])
+            .spawn()
+            .expect("failed to link ./build/build.o");
+
         let elapsed = now.elapsed();
         debug!(
             "codegen time elapsed {:.2?}ms ({:.2?}s).",
@@ -48,6 +67,7 @@ impl X86CodeGenerator {
 
     fn generate_instruction(&mut self, instruction: &Instruction) {
         match instruction {
+            Instruction::PROGRAM(instructions) => self.generate_program(instructions),
             Instruction::BLOCK(label, block) => self.generate_block(label, block),
             Instruction::STACK_VAR(label, instruction_data) => {
                 self.generate_stack_var(label, instruction_data)
@@ -61,6 +81,12 @@ impl X86CodeGenerator {
             InstructionData::INT(i) => i.to_string(),
             InstructionData::FLOAT(f) => f.to_string(),
             _ => todo!("need to implement InstructionData to string"),
+        }
+    }
+
+    fn generate_program(&mut self, instructions: &Box<Vec<Instruction>>) {
+        for instruction in instructions.iter() {
+            self.generate_instruction(instruction);
         }
     }
 

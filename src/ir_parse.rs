@@ -56,7 +56,7 @@ impl IRParser<'_> {
         //     assignment_name: None,
         // };
         // return Box::new(vec![main_block]);
-        return Instruction::BLOCK("main".to_owned(), main_block_instructions);
+        return Instruction::PROGRAM(main_block_instructions);
     }
 
     fn write_instruction_to_block(

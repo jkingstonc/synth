@@ -34,6 +34,7 @@ impl IRInterpreter<'_> {
 
     fn execute_instruction(&mut self, instruction: &Instruction) {
         match instruction {
+            Instruction::PROGRAM(instructions) => self.execute_program(instructions.clone()),
             Instruction::BLOCK(_, instructions) => self.excecute_block(instructions.clone()),
             Instruction::STACK_VAR(label, value) => self.execute_stack_var(label, value),
             Instruction::LOAD(label, value) => self.execute_load(label, value),
@@ -42,6 +43,12 @@ impl IRInterpreter<'_> {
             // InstructionType::ADD => self.execute_add(instruction),
             // InstructionType::STACK_VAR => self.execute_var(instruction),
             _ => panic!(),
+        }
+    }
+
+    fn execute_program(&mut self, instructions: Box<Vec<Instruction>>) {
+        for instruction in instructions.to_vec() {
+            self.execute_instruction(&instruction);
         }
     }
 
