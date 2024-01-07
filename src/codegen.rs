@@ -20,13 +20,20 @@ impl X86CodeGenerator {
             }
         }
 
-        self.str_buffer += "section    .text\nglobal _start\n_start:\n";
-        // self.generate_instruction(instruction);
-        self.str_buffer += "\nsection    .data\nmsg    db \"hello, world!\"\nlen    equ $ -msg";
+        // win32 hello world (linking with libc)
+        self.str_buffer +=
+            "global _main\nextern _printf\nsection .text\n_main:\npush message\ncall _printf\nadd esp, 4\nret\nmessage:\ndb 'Hello, World', 10, 0";
 
-        // win32
+        // *nix hello world
+        // self.str_buffer +=
+        // "section    .text\nglobal _start\n_start:\nmov edx, len\nmov ecx, msg\n\nmov ebx, 1\n\nmov eax, 4\nint 0x80\n\nmov eax, 1\nint 0x80";
+        // self.str_buffer += "\nsection    .data\nmsg    db \"hello, world!\"\nlen    equ $ -msg";
+
+        // self.generate_instruction(instruction);
+
+        // win32 (-lmsvcrt links with libc)
         // nasm -f wind32 -o build.o build.asm
-        // ld -m i386pe -o hello hello.o
+        // ld -m i386pe -o hello hello.o -lmsvcrt
 
         // *nix
         // nasm -f elf32 -o build.o build.asm
@@ -53,7 +60,14 @@ impl X86CodeGenerator {
             .spawn()
             .expect("failed to assemble ./build/build.asm");
         Command::new("ld")
-            .args(["-m", "i386pe", "-o", "./build/build.exe", "./build/build.o"])
+            .args([
+                "-m",
+                "i386pe",
+                "-o",
+                "./build/build.exe",
+                "./build/build.o",
+                "-lmsvcrt",
+            ])
             .spawn()
             .expect("failed to link ./build/build.o");
 
