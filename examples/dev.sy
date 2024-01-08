@@ -1,5 +1,5 @@
-const a = "hello"
-
-const b = 123
-
-const hello = a + b
+if 0 {
+    const y = 123
+} else {
+    const y = 8988
+}

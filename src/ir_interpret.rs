@@ -39,6 +39,9 @@ impl IRInterpreter<'_> {
             Instruction::STACK_VAR(label, value) => self.execute_stack_var(label, value),
             Instruction::LOAD(label, value) => self.execute_load(label, value),
             Instruction::ADD(label, left, right) => self.execute_add(label, left, right),
+            Instruction::COND_BR(condition, body, else_body) => {
+                self.execute_cond_br(condition, body, else_body)
+            }
             // InstructionType::INT => self.execute_int(instruction),
             // InstructionType::ADD => self.execute_add(instruction),
             // InstructionType::STACK_VAR => self.execute_var(instruction),
@@ -90,6 +93,7 @@ impl IRInterpreter<'_> {
             };
         };
     }
+
     fn execute_add(
         &mut self,
         label: &std::string::String,
@@ -126,5 +130,26 @@ impl IRInterpreter<'_> {
         }
         self.variables_map
             .insert(label.to_string(), InstructionData::INT(lhs + rhs));
+    }
+
+    fn execute_cond_br(
+        &mut self,
+        condition: &InstructionData,
+        body: &Box<Instruction>,
+        else_body: &Option<Box<Instruction>>,
+    ) {
+        debug!("{:?}", condition);
+        let mut condition_booleanness = false;
+        match condition {
+            InstructionData::INT(i) => condition_booleanness = *i > 0,
+            InstructionData::FLOAT(f) => condition_booleanness = *f > 0.0,
+            _ => panic!("unknown condition type"),
+        }
+
+        if condition_booleanness {
+            self.execute_instruction(&body);
+        } else if let Some(else_body_unwrapped) = else_body {
+            self.execute_instruction(else_body_unwrapped);
+        }
     }
 }

@@ -286,16 +286,28 @@ impl IRParser<'_> {
             // todo uhhh
             // todo bug: we have an issue here because the statement bit doesn't return teh i
             let (body_instruction, _) = self.gen_ast(&mut iff.body, current_block);
-            if let Some(body_instruction_unwrapped) = body_instruction {
+            let body_instruction_unwrapped = body_instruction.expect("expected body instruction");
+            // todo do the else
+            if let Some(mut else_body) = iff.else_body.as_mut() {
+                let (else_body_instruction, _) = self.gen_ast(&mut else_body, current_block);
+                let e = else_body_instruction.expect("expected body");
                 return (
                     Some(Instruction::COND_BR(
                         condition_data_unwrapped,
                         Box::new(body_instruction_unwrapped),
+                        Some(Box::new(e)),
                     )),
                     None,
                 );
             } else {
-                panic!("body requires body");
+                return (
+                    Some(Instruction::COND_BR(
+                        condition_data_unwrapped,
+                        Box::new(body_instruction_unwrapped),
+                        None,
+                    )),
+                    None,
+                );
             }
         } else {
             panic!("conditional branch requires condition");

@@ -58,7 +58,7 @@ pub enum Instruction {
     STACK_VAR(std::string::String, Option<InstructionData>),
     // conditional branch (as we are branching to other blocks this should be the last)
     // first arg is the condition, second is the body, third is the else
-    COND_BR(InstructionData, Box<Instruction>),
+    COND_BR(InstructionData, Box<Instruction>, Option<Box<Instruction>>),
 }
 
 impl Instruction {
@@ -88,13 +88,23 @@ impl Instruction {
             Instruction::ADD(location, left, right) => {
                 format!("{:<15} = {:<10} {:?} + {:?}", location, "add", left, right)
             }
-            Instruction::COND_BR(condition, body) => {
-                format!(
-                    "{:<15} {:?} then {}",
-                    "if",
-                    condition,
-                    body.to_string_for_writing()
-                )
+            Instruction::COND_BR(condition, body, else_body) => {
+                if let Some(else_body_unwrapped) = else_body {
+                    format!(
+                        "{:<15} {:?} then {} else {}",
+                        "if",
+                        condition,
+                        body.to_string_for_writing(),
+                        else_body_unwrapped.to_string_for_writing()
+                    )
+                } else {
+                    format!(
+                        "{:<15} {:?} then {}",
+                        "if",
+                        condition,
+                        body.to_string_for_writing()
+                    )
+                }
             }
             _ => panic!(),
         }
