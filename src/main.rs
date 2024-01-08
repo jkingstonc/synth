@@ -4,6 +4,8 @@ use clap::Parser;
 use log::{debug, error, info};
 
 use crate::{
+    codegen::llvm::LLVMCodeGenerator,
+    codegen::x86::X86CodeGenerator,
     compiler::CompilerOptions,
     optimize::{GeneralPassIROptimizer, IROptimizer},
 };
@@ -101,19 +103,19 @@ fn main() {
     //     _ => {}
     // }
 
-    // tmp
-    let mut ir_interpreter = ir_interpret::IRInterpreter {
-        compiler_options: &compiler_options,
-        counter: 0,
-        variables_map: HashMap::new(),
-    };
-    ir_interpreter.execute(&main_block);
+    // // tmp
+    // let mut ir_interpreter = ir_interpret::IRInterpreter {
+    //     compiler_options: &compiler_options,
+    //     counter: 0,
+    //     variables_map: HashMap::new(),
+    // };
+    // ir_interpreter.execute(&main_block);
 
     // optimization stage
 
     match args.arch.as_str() {
         "x86" => {
-            let mut code_generator = codegen::X86CodeGenerator {
+            let mut code_generator = LLVMCodeGenerator {
                 str_buffer: "".to_string(),
             };
             code_generator.generate(&main_block);
