@@ -1,9 +1,4 @@
 
 
 
-const x = 0 + 44
-
-
-if x {
-    printf(x)
-}
+printf("this is done at compiletime")

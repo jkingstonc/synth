@@ -221,8 +221,24 @@ impl IRParser<'_> {
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<InstructionData>) {
-        self.counter += 1;
-        (None, Some(InstructionData::STRING(s.to_string())))
+        // todo put it on the stack
+        // self.counter += 1;
+        // (None, Some(InstructionData::STRING(s.to_string())))
+        let local_id = self.locals_counter;
+        self.locals_counter += 1;
+        self.write_instruction_to_block(
+            Instruction::STACK_VAR(
+                local_id.to_string(),
+                Some(InstructionData::STRING(s.to_string())),
+            ),
+            current_block,
+        );
+        (
+            None,
+            Some(InstructionData::REF(Ref {
+                value: local_id.to_string(),
+            })),
+        )
     }
 
     fn gen_decl(
@@ -283,6 +299,7 @@ impl IRParser<'_> {
         left_unary: &mut LeftUnary,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<InstructionData>) {
+        debug!("doing unary!");
         match left_unary {
             LeftUnary::COMP(expr) => {
                 // todo
@@ -295,9 +312,13 @@ impl IRParser<'_> {
                 // todo we need to capture this all in a new block
                 let mut comptime_block: Box<Vec<Instruction>> = Box::new(vec![]);
                 self.gen_ast(expr, &mut comptime_block);
+
+                debug!("block {:?}", comptime_block);
+
                 let comptime_instruction = Instruction::PROGRAM(comptime_block);
                 let result = ir_executor.execute(&comptime_instruction);
 
+                debug!("done");
                 return (None, result);
                 // let (rhs_instruction, data) = self.gen_ast(expr, &mut comptime_block);
                 // if let Some(rhs_instruction_unpacked) = rhs_instruction {
