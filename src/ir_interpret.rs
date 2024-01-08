@@ -12,7 +12,7 @@ pub struct IRInterpreter<'a> {
     pub counter: usize,
     // pub instruction: Instruction,
     // todo for now this is an i32 but should be a generic 'value'
-    pub variables_map: HashMap<std::string::String, i32>,
+    pub variables_map: HashMap<std::string::String, InstructionData>,
 }
 
 /*
@@ -60,7 +60,7 @@ impl IRInterpreter<'_> {
 
     fn execute_load(&mut self, label: &std::string::String, ref_value: &Ref) {
         if let Some(val) = self.variables_map.get(&ref_value.value) {
-            self.variables_map.insert(label.to_string(), *val);
+            self.variables_map.insert(label.to_string(), val.clone());
         } else {
             panic!("couldn't find var");
         }
@@ -69,10 +69,18 @@ impl IRInterpreter<'_> {
     fn execute_stack_var(&mut self, label: &std::string::String, value: &Option<InstructionData>) {
         if let Some(data) = value {
             match data {
-                InstructionData::INT(i) => self.variables_map.insert(label.to_string(), *i),
+                InstructionData::INT(i) => {
+                    self.variables_map.insert(label.to_string(), data.clone())
+                }
+                InstructionData::FLOAT(f) => {
+                    self.variables_map.insert(label.to_string(), data.clone())
+                }
+                InstructionData::STRING(s) => {
+                    self.variables_map.insert(label.to_string(), data.clone())
+                }
                 InstructionData::REF(r) => {
                     if let Some(v) = self.variables_map.get(&r.value) {
-                        self.variables_map.insert(label.to_string(), *v);
+                        self.variables_map.insert(label.to_string(), v.clone());
                     } else {
                         panic!("couldn't find var");
                     };
@@ -96,7 +104,10 @@ impl IRInterpreter<'_> {
             InstructionData::INT(i) => lhs = *i,
             InstructionData::REF(r) => {
                 if let Some(v) = self.variables_map.get(&r.value) {
-                    lhs = *v;
+                    match v {
+                        InstructionData::INT(i) => lhs = *i,
+                        _ => panic!("unsupported type"),
+                    }
                 }
             }
             _ => panic!("unsupported type for execution"),
@@ -105,11 +116,15 @@ impl IRInterpreter<'_> {
             InstructionData::INT(i) => rhs = *i,
             InstructionData::REF(r) => {
                 if let Some(v) = self.variables_map.get(&r.value) {
-                    rhs = *v;
+                    match v {
+                        InstructionData::INT(i) => rhs = *i,
+                        _ => panic!("unsupported type"),
+                    }
                 }
             }
             _ => panic!("unsupported type for execution"),
         }
-        self.variables_map.insert(label.to_string(), lhs + rhs);
+        self.variables_map
+            .insert(label.to_string(), InstructionData::INT(lhs + rhs));
     }
 }

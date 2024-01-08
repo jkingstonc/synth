@@ -79,6 +79,7 @@ impl IRParser<'_> {
             ParsedAST::STMT(stmt) => self.gen_stmt(stmt, current_block),
             ParsedAST::BINARY(binary) => self.gen_binary(binary, current_block),
             ParsedAST::NUMBER(num) => self.gen_num(num, current_block),
+            ParsedAST::STRING(s) => self.gen_string(s, current_block),
             ParsedAST::DECL(decl) => self.gen_decl(decl, current_block),
             ParsedAST::IDENTIFIER(identifier) => self.gen_identifier(identifier, current_block),
             // ParsedAST::DIRECTIVE(directive) => self.type_check_directive(directive),
@@ -91,7 +92,6 @@ impl IRParser<'_> {
             // ParsedAST::ASSIGN(assign) => self.type_check_assign(assign),
             // ParsedAST::FN(func) => self.type_check_func(func),
             // ParsedAST::NUMBER(num) => self.type_check_num(num),
-            // ParsedAST::STRING(s) => self.type_check_string(s),
             // ParsedAST::LEFT_UNARY(left_unary) => self.type_check_left_unary(left_unary),//self.type_check_binary(binary),
             // ParsedAST::BINARY(binary) => self.type_check_binary(binary),
             // ParsedAST::CALL(call) => self.type_check_call(call), // todo
@@ -211,6 +211,16 @@ impl IRParser<'_> {
             Number::INTEGER(i) => (None, Some(InstructionData::INT(i.clone()))),
             Number::FLOAT(f) => (None, Some(InstructionData::FLOAT(f.clone()))),
         }
+    }
+
+    fn gen_string(
+        &mut self,
+        s: &mut String,
+        // instructions: &mut Box<Vec<Instruction>>,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<InstructionData>) {
+        self.counter += 1;
+        (None, Some(InstructionData::STRING(s.to_string())))
     }
 
     fn gen_decl(

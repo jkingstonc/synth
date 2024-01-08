@@ -32,6 +32,7 @@ pub enum InstructionData {
     REF(Ref),
     INT(i32),
     FLOAT(f32),
+    STRING(String),
 }
 
 // todo this should definitely be an enum, or maybe not :')
