@@ -1,9 +1,9 @@
 
 
 
-const x = comp 1 + 43
+const x = 0 + 44
 
 
-if 1 {
+if x {
     printf(x)
 }

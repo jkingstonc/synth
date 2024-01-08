@@ -203,6 +203,18 @@ impl IRInterpreter<'_> {
         Some(InstructionData::INT(lhs + rhs))
     }
 
+    fn evaluate_instruction_data_for_booleanness(&self, value: &InstructionData) -> bool {
+        match value {
+            InstructionData::REF(r) => {
+                let val = self.variables_map.get(&r.value).expect("couldn't find var");
+                self.evaluate_instruction_data_for_booleanness(val)
+            }
+            InstructionData::INT(i) => *i > 0,
+            InstructionData::FLOAT(f) => *f > 0.0,
+            _ => panic!("unknown condition type"),
+        }
+    }
+
     fn execute_cond_br(
         &mut self,
         condition: &InstructionData,
@@ -210,13 +222,7 @@ impl IRInterpreter<'_> {
         else_body: &Option<Box<Instruction>>,
     ) -> Option<InstructionData> {
         debug!("{:?}", condition);
-        let mut condition_booleanness = false;
-        match condition {
-            InstructionData::INT(i) => condition_booleanness = *i > 0,
-            InstructionData::FLOAT(f) => condition_booleanness = *f > 0.0,
-            _ => panic!("unknown condition type"),
-        }
-
+        let condition_booleanness = self.evaluate_instruction_data_for_booleanness(condition);
         if condition_booleanness {
             self.execute_instruction(&body);
         } else if let Some(else_body_unwrapped) = else_body {
