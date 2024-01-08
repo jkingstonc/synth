@@ -14,6 +14,9 @@ The point of synth is to make a programming languge that gets the job done witho
 - Plenty of built-in debugging
 - No weird exception control flow
 
+# Building
+Currently Synth uses LLVM (... in the future hopefully not). first you need a build of LLVM. Synth comes with `llvmenv` which is a crate to manage LLVM instances. First run `llvmenv init`. Then `llvmenv entries` to find an entry. Then `llvmenv build-entry <version>` to build that entry.
+
 # Running
 `cargo run -- --file .\examples\dev.sy --arch x86 -o 1 --write-ir true` 
 
