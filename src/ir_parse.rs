@@ -300,7 +300,6 @@ impl IRParser<'_> {
         left_unary: &mut LeftUnary,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<InstructionData>) {
-        debug!("doing unary!");
         match left_unary {
             LeftUnary::COMP(expr) => {
                 // todo
@@ -314,12 +313,9 @@ impl IRParser<'_> {
                 let mut comptime_block: Box<Vec<Instruction>> = Box::new(vec![]);
                 self.gen_ast(expr, &mut comptime_block);
 
-                debug!("block {:?}", comptime_block);
-
                 let comptime_instruction = Instruction::PROGRAM(comptime_block);
                 let result = ir_executor.execute(&comptime_instruction);
 
-                debug!("done");
                 return (None, result);
                 // let (rhs_instruction, data) = self.gen_ast(expr, &mut comptime_block);
                 // if let Some(rhs_instruction_unpacked) = rhs_instruction {
@@ -348,14 +344,9 @@ impl IRParser<'_> {
         call: &mut Call,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<InstructionData>) {
-        // todo hmm
-        debug!("ASDGLASHD GASDGKHAS DGLKASDG ASDGL doing call");
-
         let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
         let mut first_arg = call.args[0].borrow_mut();
         let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
-
-        debug!("callee {:?} {:?}", callee_instruction, callee_data);
 
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
