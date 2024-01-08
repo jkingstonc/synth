@@ -29,6 +29,10 @@ const VERSION: &str = "0.0.1";
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 struct Args {
+    // whether to interpret
+    #[arg(short, long)]
+    mode: Option<String>,
+
     /// Name of the file to run
     #[arg(short, long)]
     file: String,
@@ -50,6 +54,47 @@ fn main() {
 
     let args = Args::parse();
 
+    if args.mode.expect("interpret") {
+        while (true) {
+            let mut line = String::new();
+            print!(">");
+            std::io::stdin().read_line(&mut line).unwrap();
+            let mut optimization: usize = 0;
+            if let Some(o) = args.optimize {
+                optimization = o;
+            }
+            let compiler_options = CompilerOptions {
+                optimization,
+                current_file: args.file.to_string(),
+            };
+
+            let source = std::fs::read_to_string(args.file.to_string())
+                .expect("unable to read source file test.trove");
+
+            let mut lexer = lex::Lexer::new();
+            lexer.lex(Box::new(source));
+
+            let mut parser = parse::Parser {
+                tokens: &lexer.tokens,
+            };
+            let ast = parser.parse();
+
+            let mut ir_parser = ir_parse::IRParser {
+                compiler_options: &compiler_options,
+                counter: 0,
+                block_counter: 0,
+                locals_counter: 0,
+            };
+            let mut ir_interpreter = ir_interpret::IRInterpreter {
+                compiler_options: &compiler_options,
+                counter: 0,
+                variables_map: HashMap::new(),
+            };
+            ir_interpreter.execute(&main_block);
+        }
+        return;
+    }
+
     let mut optimization: usize = 0;
     if let Some(o) = args.optimize {
         optimization = o;
@@ -69,7 +114,6 @@ fn main() {
         tokens: &lexer.tokens,
     };
     let ast = parser.parse();
-    debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser {
         compiler_options: &compiler_options,
