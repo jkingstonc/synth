@@ -79,6 +79,11 @@ impl IRInterpreter<'_> {
                 label.to_string(),
                 InstructionData::INTRINSIC("printf".to_string()),
             );
+        } else if ref_value.value == "SYNTH_FILENAME" {
+            self.variables_map.insert(
+                label.to_string(),
+                InstructionData::STRING(self.compiler_options.current_file.to_string()),
+            );
         } else {
             panic!("couldn't find var");
         }
@@ -121,8 +126,6 @@ impl IRInterpreter<'_> {
         callee: &InstructionData,
         arg: &InstructionData,
     ) -> Option<InstructionData> {
-        debug!("umm {:?}", callee);
-
         let mut callee_data: InstructionData;
         match callee {
             InstructionData::REF(r) => {

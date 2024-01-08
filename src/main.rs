@@ -52,9 +52,13 @@ fn main() {
     if let Some(o) = args.optimize {
         optimization = o;
     }
-    let compiler_options = CompilerOptions { optimization };
+    let compiler_options = CompilerOptions {
+        optimization,
+        current_file: args.file.to_string(),
+    };
 
-    let source = std::fs::read_to_string(args.file).expect("unable to read source file test.trove");
+    let source = std::fs::read_to_string(args.file.to_string())
+        .expect("unable to read source file test.trove");
 
     let mut lexer = lex::Lexer::new();
     lexer.lex(Box::new(source));
