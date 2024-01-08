@@ -1,21 +1,4 @@
-/*
-
-
-const x = 5
-const y = 6
-const z = x + y + 7
-
-%x = STACK_VAR 5
-%y = STACK_VAR 6
-%0 = LOAD %x
-%1 = LOAD %y
-%2 = add %0 %1
-%z = add %2 7
-
-
-*/
-
-// a ref refers to a location in the IR
+// a ref refers to a location in memory (this is abstracted away, it could be a register, the stack etc. it's up to the code-generator to decide that)
 #[derive(Debug, Clone)]
 pub struct Ref {
     pub value: std::string::String,
@@ -118,34 +101,16 @@ impl Instruction {
             }
             _ => panic!(),
         }
+    }
+}
 
-        // "todo".to_string()
-        // if let Some(assignment_name) = &self.assignment_name {
-        //     if let Some(data) = &self.data {
-        //         format!(
-        //             "{:<10} = {:<10} {}",
-        //             assignment_name,
-        //             self.instruction_type.to_string(),
-        //             data.to_owned().to_string_for_writing()
-        //         )
-        //     } else {
-        //         format!(
-        //             "{:<10} = {:<10}",
-        //             assignment_name,
-        //             self.instruction_type.to_string()
-        //         )
-        //     }
-        // } else {
-        //     if let Some(data) = &self.data {
-        //         format!(
-        //             "{:<10} {:<10} {}",
-        //             "",
-        //             self.instruction_type.to_string(),
-        //             data.to_owned().to_string_for_writing()
-        //         )
-        //     } else {
-        //         format!("{:<10} {:<10}", "", self.instruction_type.to_string())
-        //     }
-        // }
+#[cfg(test)]
+mod tests {
+    use crate::ir::InstructionData;
+
+    #[test]
+    fn can_construct_int_data() {
+        let int_data = InstructionData::INT(123);
+        assert_eq!(true, true);
     }
 }
