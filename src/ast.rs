@@ -72,6 +72,11 @@ pub struct Block<'a> {
     pub body: Vec<ParsedAST<'a>>,
 }
 
+#[derive(Debug)]
+pub enum LeftUnary<'a> {
+    COMP(Box<ParsedAST<'a>>),
+}
+
 // todo this should be a struct so we get positional information
 #[derive(Debug)]
 pub enum ParsedAST<'a> {
@@ -88,7 +93,7 @@ pub enum ParsedAST<'a> {
     STRING(std::string::String),
     // FN(Fn<'a>),
     NUMBER(Number),
-    // LEFT_UNARY(LeftUnary<'a>),
+    LEFT_UNARY(LeftUnary<'a>),
     BINARY(Binary<'a>),
     // GROUP(Group<'a>),
     CALL(Call<'a>),

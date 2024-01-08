@@ -1,5 +1,3 @@
-if 0 {
-    const y = 123
-} else {
-    const y = 8988
-}
+
+
+const y = comp 4 + 5 + 4 + 5 + 65

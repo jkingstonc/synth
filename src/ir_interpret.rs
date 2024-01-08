@@ -20,9 +20,9 @@ This will walk through the instructions and evaluate them (no JIT yet :().
 Still a massive WIP as we need to decide on the instruction model (SSA [Single Static Assignment] etc).
 */
 impl IRInterpreter<'_> {
-    pub fn execute(&mut self, instruction: &Instruction) {
+    pub fn execute(&mut self, instruction: &Instruction) -> Option<InstructionData> {
         let now = Instant::now();
-        self.execute_instruction(instruction);
+        let result = self.execute_instruction(instruction);
         debug!("vars {:?}", self.variables_map);
         let elapsed = now.elapsed();
         debug!(
@@ -30,9 +30,10 @@ impl IRInterpreter<'_> {
             elapsed.as_millis(),
             elapsed.as_secs()
         );
+        result
     }
 
-    fn execute_instruction(&mut self, instruction: &Instruction) {
+    fn execute_instruction(&mut self, instruction: &Instruction) -> Option<InstructionData> {
         match instruction {
             Instruction::PROGRAM(instructions) => self.execute_program(instructions.clone()),
             Instruction::BLOCK(_, instructions) => self.excecute_block(instructions.clone()),
@@ -49,27 +50,40 @@ impl IRInterpreter<'_> {
         }
     }
 
-    fn execute_program(&mut self, instructions: Box<Vec<Instruction>>) {
+    fn execute_program(&mut self, instructions: Box<Vec<Instruction>>) -> Option<InstructionData> {
+        let mut result: Option<InstructionData> = None;
         for instruction in instructions.to_vec() {
-            self.execute_instruction(&instruction);
+            result = self.execute_instruction(&instruction);
         }
+        result
     }
 
-    fn excecute_block(&mut self, instructions: Box<Vec<Instruction>>) {
+    fn excecute_block(&mut self, instructions: Box<Vec<Instruction>>) -> Option<InstructionData> {
+        let mut result: Option<InstructionData> = None;
         for instruction in instructions.to_vec() {
-            self.execute_instruction(&instruction);
+            result = self.execute_instruction(&instruction);
         }
+        result
     }
 
-    fn execute_load(&mut self, label: &std::string::String, ref_value: &Ref) {
+    fn execute_load(
+        &mut self,
+        label: &std::string::String,
+        ref_value: &Ref,
+    ) -> Option<InstructionData> {
         if let Some(val) = self.variables_map.get(&ref_value.value) {
             self.variables_map.insert(label.to_string(), val.clone());
         } else {
             panic!("couldn't find var");
         }
+        None
     }
 
-    fn execute_stack_var(&mut self, label: &std::string::String, value: &Option<InstructionData>) {
+    fn execute_stack_var(
+        &mut self,
+        label: &std::string::String,
+        value: &Option<InstructionData>,
+    ) -> Option<InstructionData> {
         if let Some(data) = value {
             match data {
                 InstructionData::INT(i) => {
@@ -92,6 +106,7 @@ impl IRInterpreter<'_> {
                 _ => panic!("unsupported type for execution"),
             };
         };
+        None
     }
 
     fn execute_add(
@@ -99,7 +114,7 @@ impl IRInterpreter<'_> {
         label: &std::string::String,
         left: &InstructionData,
         right: &InstructionData,
-    ) {
+    ) -> Option<InstructionData> {
         let result = 0;
 
         let mut lhs = 0;
@@ -130,6 +145,7 @@ impl IRInterpreter<'_> {
         }
         self.variables_map
             .insert(label.to_string(), InstructionData::INT(lhs + rhs));
+        Some(InstructionData::INT(lhs + rhs))
     }
 
     fn execute_cond_br(
@@ -137,7 +153,7 @@ impl IRInterpreter<'_> {
         condition: &InstructionData,
         body: &Box<Instruction>,
         else_body: &Option<Box<Instruction>>,
-    ) {
+    ) -> Option<InstructionData> {
         debug!("{:?}", condition);
         let mut condition_booleanness = false;
         match condition {
@@ -151,5 +167,6 @@ impl IRInterpreter<'_> {
         } else if let Some(else_body_unwrapped) = else_body {
             self.execute_instruction(else_body_unwrapped);
         }
+        None
     }
 }

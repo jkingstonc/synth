@@ -1,11 +1,12 @@
-use std::{time::Instant, vec};
+use std::{collections::HashMap, time::Instant, vec};
 
 use log::debug;
 
 use crate::{
-    ast::{Binary, Block, Decl, If, Number, ParsedAST, Program},
+    ast::{Binary, Block, Decl, If, LeftUnary, Number, ParsedAST, Program},
     compiler::CompilerOptions,
     ir::{Instruction, InstructionData, Ref},
+    ir_interpret::IRInterpreter,
     token::Token,
 };
 
@@ -92,7 +93,7 @@ impl IRParser<'_> {
             // ParsedAST::ASSIGN(assign) => self.type_check_assign(assign),
             // ParsedAST::FN(func) => self.type_check_func(func),
             // ParsedAST::NUMBER(num) => self.type_check_num(num),
-            // ParsedAST::LEFT_UNARY(left_unary) => self.type_check_left_unary(left_unary),//self.type_check_binary(binary),
+            ParsedAST::LEFT_UNARY(left_unary) => self.gen_left_unary(left_unary, current_block), //self.type_check_binary(binary),
             // ParsedAST::BINARY(binary) => self.type_check_binary(binary),
             // ParsedAST::CALL(call) => self.type_check_call(call), // todo
             // ParsedAST::STRUCT_TYPES_LIST(s) => None, // todo
@@ -274,6 +275,49 @@ impl IRParser<'_> {
         let mut new_block = Instruction::BLOCK(format!("{:?}", block_id), new_block_instructions);
         // self.write_instruction_to_block(new_block, current_block);
         (Some(new_block), None)
+    }
+
+    fn gen_left_unary(
+        &mut self,
+        left_unary: &mut LeftUnary,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<InstructionData>) {
+        match left_unary {
+            LeftUnary::COMP(expr) => {
+                // todo
+                let mut ir_executor = IRInterpreter {
+                    compiler_options: self.compiler_options,
+                    counter: 0,
+                    variables_map: HashMap::new(),
+                };
+
+                // todo we need to capture this all in a new block
+                let mut comptime_block: Box<Vec<Instruction>> = Box::new(vec![]);
+                self.gen_ast(expr, &mut comptime_block);
+                let comptime_instruction = Instruction::PROGRAM(comptime_block);
+                let result = ir_executor.execute(&comptime_instruction);
+
+                return (None, result);
+                // let (rhs_instruction, data) = self.gen_ast(expr, &mut comptime_block);
+                // if let Some(rhs_instruction_unpacked) = rhs_instruction {
+                //     // todo we need to get the result!
+                //     // todo umm this isn't working
+                //     let result = ir_executor.execute(&rhs_instruction_unpacked);
+
+                //     // debug!("got result! {:?}", result);
+                //     debug!("executing... <{:?}>", result);
+                //     return (None, result);
+                // } else if let Some(data_unpacked) = data {
+                //     debug!(
+                //         "comptime already found value {:?}, inserting",
+                //         data_unpacked
+                //     );
+                //     return (None, Some(data_unpacked));
+                // }
+            }
+        }
+
+        (None, None)
     }
 
     fn gen_if(

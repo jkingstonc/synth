@@ -4,7 +4,7 @@ use log::debug;
 
 use crate::ast::{
     Assign, Binary, Block, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, If,
-    LhsAccess, Number, ParsedAST, Program,
+    LeftUnary, LhsAccess, Number, ParsedAST, Program,
 };
 use crate::token::Token;
 
@@ -220,16 +220,16 @@ impl Parser<'_> {
 
     // e.g. comp 1+2
     fn expression_instructions(&self, current: &mut usize) -> ParsedAST {
-        if !self.end(&current) {
-            if self.expecting(Token::COMP, current) {
-                self.consume(current);
-                let rhs = self.plus_or_minus(current);
-                return ParsedAST::EXPRESSION_INSTRUCTION(ExpressionInstruction {
-                    instr: ExpressionInstructionEnum::COMP,
-                    rhs: Box::new(rhs),
-                });
-            }
-        }
+        // if !self.end(&current) {
+        //     if self.expecting(Token::COMP, current) {
+        //         self.consume(current);
+        //         let rhs = self.plus_or_minus(current);
+        //         return ParsedAST::EXPRESSION_INSTRUCTION(ExpressionInstruction {
+        //             instr: ExpressionInstructionEnum::COMP,
+        //             rhs: Box::new(rhs),
+        //         });
+        //     }
+        // }
         self.plus_or_minus(current)
     }
 
@@ -275,20 +275,11 @@ impl Parser<'_> {
 
     fn unary(&self, current: &mut usize) -> ParsedAST {
         // todo &some_var
-        // if self.expecting(Token::AT, current) {
-        //     self.consume(current);
-        //     let rhs = self.call(current);
-        //     let rhs_type = Type {
-        //         mutability: Mutability::CONSTANT,
-        //         primative: Primative::INCOMPLETE,
-        //         reference: false,
-        //     };
-        //     return ParsedAST::LEFT_UNARY(LeftUnary::TAKE_REFERENCE(TakeReference {
-        //         rhs: Box::new(rhs),
-        //         rhs_type,
-        //         is_heap_alloc: false,
-        //     }));
-        // }
+        if self.expecting(Token::COMP, current) {
+            self.consume(current);
+            let rhs = self.expression(current);
+            return ParsedAST::LEFT_UNARY(LeftUnary::COMP(Box::new(rhs)));
+        }
 
         self.call(current)
     }
