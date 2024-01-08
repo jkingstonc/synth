@@ -210,8 +210,9 @@ impl Lexer {
     fn is_keyword(&self, keyword: std::string::String) -> bool {
         let mut matched = true;
         for i in 0..keyword.chars().count() {
-            if self.program.chars().nth(self.current + i).unwrap()
-                != keyword.chars().nth(i).unwrap()
+            if self.program.chars().nth(self.current + i).is_some()
+                && self.program.chars().nth(self.current + i).unwrap()
+                    != keyword.chars().nth(i).unwrap()
             {
                 matched = false;
             }

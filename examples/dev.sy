@@ -1,1 +1,5 @@
 const a = "hello"
+
+const b = 123
+
+const hello = a + b

@@ -21,8 +21,11 @@ The point of synth is to make a programming languge that gets the job done witho
 - https://github.com/jkingstoncsecond/trove
 
 # TODO
-- Parse [-]
-- Type analysis [-]
-- IR generation [-]
-    - if not used, dont generate [-]
-- X86 generation [-]
+- [ ] Parse
+- [ ] Type analysis
+- [ ] IR generation
+    - [ ] if not used, dont generate
+- [ ] X86 generation
+
+# Bugs
+- [ ] need a newline at the end otherwise lexer breaks
