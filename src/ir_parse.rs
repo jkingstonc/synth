@@ -115,7 +115,8 @@ impl IRParser<'_> {
             if let Some(instruction_unwrapped) = instruction {
                 self.write_instruction_to_block(instruction_unwrapped, current_block);
             } else {
-                panic!("expected instruction");
+                // todo, do we need to panic here? maybe not?
+                // panic!("expected instruction");
             }
         }
         (None, None)
@@ -348,22 +349,31 @@ impl IRParser<'_> {
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<InstructionData>) {
         // todo hmm
+        debug!("ASDGLASHD GASDGKHAS DGLKASDG ASDGL doing call");
 
         let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
         let mut first_arg = call.args[0].borrow_mut();
         let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
 
         debug!("callee {:?} {:?}", callee_instruction, callee_data);
-        // self.write_instruction_to_block(Instruction::CALL((), ()))
+
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
-        (
-            Some(Instruction::CALL(
+
+        self.write_instruction_to_block(
+            Instruction::CALL(
                 locals_id.to_string(),
                 callee_data.expect("expected callee data"),
                 first_arg_data.expect("expected arg data"),
-            )),
+            ),
+            current_block,
+        );
+        // todo this is really annoying
+        (
             None,
+            Some(InstructionData::REF(Ref {
+                value: locals_id.to_string(),
+            })),
         )
     }
 

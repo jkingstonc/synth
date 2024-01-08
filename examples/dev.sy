@@ -1,4 +1,8 @@
 
 
 
-printf("this is done at compiletime")
+const x = 2
+
+comp printf("this is done at compiletime")
+
+const y = 3

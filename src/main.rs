@@ -63,6 +63,7 @@ fn main() {
         tokens: &lexer.tokens,
     };
     let ast = parser.parse();
+    debug!("ast {:?}", ast);
 
     let mut ir_parser = ir_parse::IRParser {
         compiler_options: &compiler_options,
