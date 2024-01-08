@@ -40,6 +40,7 @@ impl IRInterpreter<'_> {
             Instruction::STACK_VAR(label, value) => self.execute_stack_var(label, value),
             Instruction::LOAD(label, value) => self.execute_load(label, value),
             Instruction::ADD(label, left, right) => self.execute_add(label, left, right),
+            Instruction::CALL(label, callee, arg) => self.execute_call(label, callee, arg),
             Instruction::COND_BR(condition, body, else_body) => {
                 self.execute_cond_br(condition, body, else_body)
             }
@@ -73,6 +74,11 @@ impl IRInterpreter<'_> {
     ) -> Option<InstructionData> {
         if let Some(val) = self.variables_map.get(&ref_value.value) {
             self.variables_map.insert(label.to_string(), val.clone());
+        } else if ref_value.value == "printf" {
+            self.variables_map.insert(
+                label.to_string(),
+                InstructionData::INTRINSIC("printf".to_string()),
+            );
         } else {
             panic!("couldn't find var");
         }
@@ -109,14 +115,63 @@ impl IRInterpreter<'_> {
         None
     }
 
+    fn execute_call(
+        &mut self,
+        label: &std::string::String,
+        callee: &InstructionData,
+        arg: &InstructionData,
+    ) -> Option<InstructionData> {
+        debug!("umm {:?}", callee);
+
+        let mut callee_data: InstructionData;
+        match callee {
+            InstructionData::REF(r) => {
+                callee_data = self
+                    .variables_map
+                    .get(&r.value)
+                    .expect("could not find var")
+                    .clone();
+            }
+            _ => panic!("callee lookup should be ref"),
+        }
+
+        match callee_data {
+            InstructionData::INTRINSIC(i) => {
+                if i == "printf" {
+                    // assume that args are passed in as locals
+                    let mut arg_data: InstructionData;
+
+                    // todo global formatter in ir.rs
+                    match arg {
+                        InstructionData::REF(r) => {
+                            arg_data = self
+                                .variables_map
+                                .get(&r.value)
+                                .expect("expected arg as ref")
+                                .clone()
+                        }
+                        _ => panic!("couldn't print instruction data :("),
+                    };
+
+                    match arg_data {
+                        InstructionData::INT(i) => println!("{}", i),
+                        InstructionData::FLOAT(f) => println!("{}", f),
+                        InstructionData::STRING(s) => println!("{}", s),
+                        _ => panic!("couldn't print InstructionData"),
+                    };
+                }
+            }
+            _ => panic!("callee must be function or intrinsic"),
+        };
+        None
+    }
+
     fn execute_add(
         &mut self,
         label: &std::string::String,
         left: &InstructionData,
         right: &InstructionData,
     ) -> Option<InstructionData> {
-        let result = 0;
-
         let mut lhs = 0;
         let mut rhs = 0;
         match left {

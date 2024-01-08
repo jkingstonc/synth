@@ -29,3 +29,4 @@ The point of synth is to make a programming languge that gets the job done witho
 
 # Bugs
 - [ ] need a newline at the end otherwise lexer breaks
+- [ ] when we encounter a keyword, we don't check if theres whitespace after it which we should

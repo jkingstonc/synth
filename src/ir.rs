@@ -33,6 +33,8 @@ pub enum InstructionData {
     INT(i32),
     FLOAT(f32),
     STRING(String),
+    // todo this is a hack
+    INTRINSIC(String),
 }
 
 // todo this should definitely be an enum, or maybe not :')
@@ -59,6 +61,8 @@ pub enum Instruction {
     // conditional branch (as we are branching to other blocks this should be the last)
     // first arg is the condition, second is the body, third is the else
     COND_BR(InstructionData, Box<Instruction>, Option<Box<Instruction>>),
+    // first arg is the function to call, the second is the first param (todo support more params)
+    CALL(std::string::String, InstructionData, InstructionData),
 }
 
 impl Instruction {
@@ -87,6 +91,12 @@ impl Instruction {
             ),
             Instruction::ADD(location, left, right) => {
                 format!("{:<15} = {:<10} {:?} + {:?}", location, "add", left, right)
+            }
+            Instruction::CALL(location, callee, arg) => {
+                format!(
+                    "{:<15} = {:<10} {:?} args [{:?}]",
+                    location, "call", callee, arg
+                )
             }
             Instruction::COND_BR(condition, body, else_body) => {
                 if let Some(else_body_unwrapped) = else_body {

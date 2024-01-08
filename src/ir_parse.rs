@@ -1,9 +1,9 @@
-use std::{collections::HashMap, time::Instant, vec};
+use std::{borrow::BorrowMut, collections::HashMap, time::Instant, vec};
 
 use log::debug;
 
 use crate::{
-    ast::{Binary, Block, Decl, If, LeftUnary, Number, ParsedAST, Program},
+    ast::{Binary, Block, Call, Decl, If, LeftUnary, Number, ParsedAST, Program},
     compiler::CompilerOptions,
     ir::{Instruction, InstructionData, Ref},
     ir_interpret::IRInterpreter,
@@ -87,6 +87,7 @@ impl IRParser<'_> {
             // ParsedAST::PROGRAM(program) => self.type_check_program(program),
             ParsedAST::BLOCK(block) => self.gen_block(block, current_block),
             ParsedAST::IF(iff) => self.gen_if(iff, current_block),
+            ParsedAST::CALL(call) => self.gen_call(call, current_block),
             // ParsedAST::FOR(forr) => self.type_check_for(forr),
             // ParsedAST::RET(ret) => self.type_check_ret(ret),
             // ParsedAST::DECL(decl) => self.type_check_decl(decl),
@@ -318,6 +319,31 @@ impl IRParser<'_> {
         }
 
         (None, None)
+    }
+
+    fn gen_call(
+        &mut self,
+        call: &mut Call,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<InstructionData>) {
+        // todo hmm
+
+        let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
+        let mut first_arg = call.args[0].borrow_mut();
+        let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
+
+        debug!("callee {:?} {:?}", callee_instruction, callee_data);
+        // self.write_instruction_to_block(Instruction::CALL((), ()))
+        let locals_id = self.locals_counter;
+        self.locals_counter += 1;
+        (
+            Some(Instruction::CALL(
+                locals_id.to_string(),
+                callee_data.expect("expected callee data"),
+                first_arg_data.expect("expected arg data"),
+            )),
+            None,
+        )
     }
 
     fn gen_if(
