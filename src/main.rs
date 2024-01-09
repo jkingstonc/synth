@@ -60,7 +60,7 @@ fn main() {
 
     let args = Args::parse();
 
-    if args.interpret.expect("interpret") {
+    if args.interpret.is_some() && args.interpret.expect("expected value") {
         while true {
             print!(">");
             io::stdout().flush();
