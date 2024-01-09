@@ -1,4 +1,10 @@
-use std::{collections::HashMap, fs::File, io::BufWriter, io::Write, time::Instant};
+use std::{
+    collections::HashMap,
+    fs::File,
+    io::Write,
+    io::{self, BufWriter},
+    time::Instant,
+};
 
 use clap::Parser;
 use log::{debug, error, info};
@@ -31,7 +37,7 @@ const VERSION: &str = "0.0.1";
 struct Args {
     // whether to interpret
     #[arg(short, long)]
-    mode: Option<String>,
+    interpret: Option<bool>,
 
     /// Name of the file to run
     #[arg(short, long)]
@@ -54,46 +60,46 @@ fn main() {
 
     let args = Args::parse();
 
-    // if args.mode.expect("interpret") {
-    //     while (true) {
-    //         let mut line = String::new();
-    //         print!(">");
-    //         std::io::stdin().read_line(&mut line).unwrap();
-    //         let mut optimization: usize = 0;
-    //         if let Some(o) = args.optimize {
-    //             optimization = o;
-    //         }
-    //         let compiler_options = CompilerOptions {
-    //             optimization,
-    //             current_file: args.file.to_string(),
-    //         };
+    if args.interpret.expect("interpret") {
+        while true {
+            print!(">");
+            io::stdout().flush();
+            let mut line = String::new();
+            std::io::stdin().read_line(&mut line).unwrap();
+            let mut optimization: usize = 0;
+            if let Some(o) = args.optimize {
+                optimization = o;
+            }
+            let compiler_options = CompilerOptions {
+                optimization,
+                current_file: "<interpret>".to_string(),
+            };
 
-    //         let source = std::fs::read_to_string(args.file.to_string())
-    //             .expect("unable to read source file test.trove");
+            let mut lexer = lex::Lexer::new();
+            lexer.lex(Box::new(line));
 
-    //         let mut lexer = lex::Lexer::new();
-    //         lexer.lex(Box::new(source));
+            let mut parser = parse::Parser {
+                tokens: &lexer.tokens,
+            };
+            let ast = parser.parse();
 
-    //         let mut parser = parse::Parser {
-    //             tokens: &lexer.tokens,
-    //         };
-    //         let ast = parser.parse();
-
-    //         let mut ir_parser = ir_parse::IRParser {
-    //             compiler_options: &compiler_options,
-    //             counter: 0,
-    //             block_counter: 0,
-    //             locals_counter: 0,
-    //         };
-    //         let mut ir_interpreter = ir_interpret::IRInterpreter {
-    //             compiler_options: &compiler_options,
-    //             counter: 0,
-    //             variables_map: HashMap::new(),
-    //         };
-    //         ir_interpreter.execute(&main_block);
-    //     }
-    //     return;
-    // }
+            let mut ir_parser = ir_parse::IRParser {
+                compiler_options: &compiler_options,
+                counter: 0,
+                block_counter: 0,
+                locals_counter: 0,
+            };
+            let mut main_block = ir_parser.parse(ast);
+            let mut ir_interpreter = ir_interpret::IRInterpreter {
+                compiler_options: &compiler_options,
+                counter: 0,
+                variables_map: HashMap::new(),
+            };
+            let result = ir_interpreter.execute(&main_block);
+            println!("{:?}", result);
+        }
+        return;
+    }
 
     let mut optimization: usize = 0;
     if let Some(o) = args.optimize {
