@@ -63,12 +63,18 @@ impl LLVMCodeGenerator {
             // let ptr = c_str.as_ptr();
             // let glob = llvm_sys::core::LLVMAddGlobal(module, llvm_sys::core::LLVMInt32Type(), ptr);
 
-            llvm_sys::core::LLVMPositionBuilder(builder, bb, function);
-            // self.generate_instruction(instruction, builder, bb);
+            // llvm_sys::core::LLVMPositionBuilder(builder, bb, function);
+            llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
-            let c_str = CString::new("hi").unwrap();
-            let ddd = c_str.as_ptr();
-            // llvm_sys::core::LLVMBuildAlloca(builder, llvm_sys::core::LLVMInt64Type(), ddd);
+            self.generate_instruction(instruction, builder, bb);
+
+            // let c_str = CString::new("hi").unwrap();
+            // let ddd = c_str.as_ptr();
+            // llvm_sys::core::LLVMBuildAlloca(
+            //     builder,
+            //     llvm_sys::core::LLVMInt64TypeInContext(context),
+            //     b"asdgasdg\0".as_ptr() as *const _,
+            // );
 
             // let add = llvm_sys::core::LLVMBuildAdd(
             //     builder,
@@ -173,13 +179,10 @@ impl LLVMCodeGenerator {
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            let c_str = CString::new("hi").unwrap();
-            let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
-                builder,
-                llvm_sys::core::LLVMInt32Type(),
-                // label.to_owned().as_bytes().as_ptr() as *const i8,
-                c_str.as_ptr(),
-            );
+            let c_str = CString::new(label.as_str()).unwrap();
+            let ptr = c_str.as_ptr();
+            let alloca_instruction =
+                llvm_sys::core::LLVMBuildAlloca(builder, llvm_sys::core::LLVMInt32Type(), ptr);
             // if let Some(val) = value {
             //     let assigned_value_ref = self.instruction_data_to_llvm_value_ref();
             //     llvm_sys::core::LLVMBuildStore(builder, assigned_value_ref, alloca_instruction);
