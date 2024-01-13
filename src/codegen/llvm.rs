@@ -44,8 +44,7 @@ impl LLVMCodeGenerator {
             // Then create it in our module.
             let void = llvm_sys::core::LLVMVoidTypeInContext(context);
             let i32_type = llvm_sys::core::LLVMInt32Type();
-            let function_type =
-                llvm_sys::core::LLVMFunctionType(i32_type, std::ptr::null_mut(), 0, 0);
+            let function_type = llvm_sys::core::LLVMFunctionType(void, std::ptr::null_mut(), 0, 0);
             let function = llvm_sys::core::LLVMAddFunction(
                 module,
                 b"main\0".as_ptr() as *const _,
@@ -60,13 +59,34 @@ impl LLVMCodeGenerator {
                 b"entry\0".as_ptr() as *const _,
             );
 
-            debug!("llvm doing program {:?}", instruction);
-            self.generate_instruction(instruction, builder, bb);
+            // let c_str = CString::new("hi").expect("i am a c string");
+            // let ptr = c_str.as_ptr();
+            // let glob = llvm_sys::core::LLVMAddGlobal(module, llvm_sys::core::LLVMInt32Type(), ptr);
 
-            // llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
+            llvm_sys::core::LLVMPositionBuilder(builder, bb, function);
+            // self.generate_instruction(instruction, builder, bb);
+
+            let c_str = CString::new("hi").unwrap();
+            let ddd = c_str.as_ptr();
+            // llvm_sys::core::LLVMBuildAlloca(builder, llvm_sys::core::LLVMInt64Type(), ddd);
+
+            // let add = llvm_sys::core::LLVMBuildAdd(
+            //     builder,
+            //     LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 44 as u64, 1),
+            //     LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 55 as u64, 1),
+            //     add1,
+            // );
+            // let add2 = llvm_sys::core::LLVMBuildAdd(
+            //     builder,
+            //     add,
+            //     LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 555 as u64, 1),
+            //     c_str,
+            // );
+
+            llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
             // Emit a `ret void` into the function
-            // llvm_sys::core::LLVMBuildRetVoid(builder);
+            llvm_sys::core::LLVMBuildRetVoid(builder);
 
             let s = llvm_sys::core::LLVMPrintModuleToString(module);
             let contents_str = CStr::from_ptr(s).to_str().unwrap();
@@ -110,7 +130,7 @@ impl LLVMCodeGenerator {
         instruction: &Instruction,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
-    ) {
+    ) -> Option<*mut LLVMValue> {
         match instruction {
             Instruction::PROGRAM(instructions) => {
                 self.generate_program(instructions, builder, current_block)
@@ -126,7 +146,11 @@ impl LLVMCodeGenerator {
             //     self.generate_stack_var(label, instruction_data)
             // }
             _ => panic!("unsupported instruction"),
-        };
+        }
+    }
+
+    fn instruction_data_to_llvm_value_ref(&mut self) -> LLVMValueRef {
+        unsafe { llvm_sys::core::LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 4, 1) }
     }
 
     fn generate_program(
@@ -134,10 +158,11 @@ impl LLVMCodeGenerator {
         instructions: &Box<Vec<Instruction>>,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
-    ) {
+    ) -> Option<*mut LLVMValue> {
         for instruction in instructions.iter() {
             self.generate_instruction(instruction, builder, current_block);
         }
+        None
     }
 
     fn generate_stack_var(
@@ -146,13 +171,20 @@ impl LLVMCodeGenerator {
         value: &Option<InstructionData>,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
-    ) {
+    ) -> Option<*mut LLVMValue> {
         unsafe {
-            // llvm_sys::core::LLVMBuildAlloca(
-            //     builder,
-            //     llvm_sys::core::LLVMInt32Type(),
-            //     label.to_owned().as_bytes().as_ptr() as *const i8,
-            // );
+            let c_str = CString::new("hi").unwrap();
+            let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
+                builder,
+                llvm_sys::core::LLVMInt32Type(),
+                // label.to_owned().as_bytes().as_ptr() as *const i8,
+                c_str.as_ptr(),
+            );
+            // if let Some(val) = value {
+            //     let assigned_value_ref = self.instruction_data_to_llvm_value_ref();
+            //     llvm_sys::core::LLVMBuildStore(builder, assigned_value_ref, alloca_instruction);
+            // }
+            None
         }
     }
 
@@ -163,8 +195,7 @@ impl LLVMCodeGenerator {
         second: &InstructionData,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
-    ) {
-        debug!("doing add!");
+    ) -> Option<*mut LLVMValue> {
         unsafe {
             let mut left: LLVMValueRef;
             let mut right: LLVMValueRef;
@@ -190,6 +221,7 @@ impl LLVMCodeGenerator {
 
             llvm_sys::core::LLVMPositionBuilderAtEnd(builder, current_block);
             llvm_sys::core::LLVMBuildRet(builder, add_instr);
+            None
         }
     }
 }
