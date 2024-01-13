@@ -1,4 +1,7 @@
 extern crate llvm_sys;
+use llvm_sys::core::{LLVMConstInt, LLVMPositionBuilder};
+use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMValue};
 use log::{debug, error, info, warn};
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -11,6 +14,11 @@ pub struct LLVMCodeGenerator {
     pub str_buffer: String,
 }
 
+/*
+References:
+- https://github.com/lyledean1/calculon/blob/main/src/main.rs
+- https://medium.com/@jayphelps/using-llvm-from-rust-to-generate-webassembly-93e8c193fdb4
+*/
 impl LLVMCodeGenerator {
     pub fn generate(&mut self, instruction: &Instruction) {
         let now = Instant::now();
@@ -35,7 +43,9 @@ impl LLVMCodeGenerator {
             // Get the type signature for void nop(void);
             // Then create it in our module.
             let void = llvm_sys::core::LLVMVoidTypeInContext(context);
-            let function_type = llvm_sys::core::LLVMFunctionType(void, std::ptr::null_mut(), 0, 0);
+            let i32_type = llvm_sys::core::LLVMInt32Type();
+            let function_type =
+                llvm_sys::core::LLVMFunctionType(i32_type, std::ptr::null_mut(), 0, 0);
             let function = llvm_sys::core::LLVMAddFunction(
                 module,
                 b"main\0".as_ptr() as *const _,
@@ -49,10 +59,14 @@ impl LLVMCodeGenerator {
                 function,
                 b"entry\0".as_ptr() as *const _,
             );
-            llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
+
+            debug!("llvm doing program {:?}", instruction);
+            self.generate_instruction(instruction, builder, bb);
+
+            // llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
             // Emit a `ret void` into the function
-            llvm_sys::core::LLVMBuildRetVoid(builder);
+            // llvm_sys::core::LLVMBuildRetVoid(builder);
 
             let s = llvm_sys::core::LLVMPrintModuleToString(module);
             let contents_str = CStr::from_ptr(s).to_str().unwrap();
@@ -74,12 +88,12 @@ impl LLVMCodeGenerator {
 
             Command::new("clang")
                 .args(["-c", "./build/build.s", "-o", "./build/build.o"])
-                .spawn()
+                .output()
                 .expect("failed to build ./build/build.s");
 
             Command::new("clang")
                 .args(["./build/build.o", "-o", "./build/build.exe"])
-                .spawn()
+                .output()
                 .expect("failed to build ./build/build.o");
         }
 
@@ -91,42 +105,72 @@ impl LLVMCodeGenerator {
         );
     }
 
-    fn generate_instruction(&mut self, instruction: &Instruction) {
+    fn generate_instruction(
+        &mut self,
+        instruction: &Instruction,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+    ) {
         match instruction {
-            Instruction::PROGRAM(instructions) => self.generate_program(instructions),
-            Instruction::BLOCK(label, block) => self.generate_block(label, block),
-            Instruction::STACK_VAR(label, instruction_data) => {
-                self.generate_stack_var(label, instruction_data)
+            Instruction::PROGRAM(instructions) => {
+                self.generate_program(instructions, builder, current_block)
             }
+            Instruction::ADD(location, first, second) => {
+                self.generate_add(location, first, second, builder, current_block)
+            }
+            // Instruction::BLOCK(label, block) => self.generate_block(label, block),
+            // Instruction::STACK_VAR(label, instruction_data) => {
+            //     self.generate_stack_var(label, instruction_data)
+            // }
             _ => panic!("unsupported instruction"),
         };
     }
 
-    fn instruction_data_to_asm_string(&self, instruction_data: &InstructionData) -> String {
-        match instruction_data {
-            InstructionData::INT(i) => i.to_string(),
-            InstructionData::FLOAT(f) => f.to_string(),
-            _ => todo!("need to implement InstructionData to string"),
-        }
-    }
-
-    fn generate_program(&mut self, instructions: &Box<Vec<Instruction>>) {
+    fn generate_program(
+        &mut self,
+        instructions: &Box<Vec<Instruction>>,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+    ) {
         for instruction in instructions.iter() {
-            self.generate_instruction(instruction);
+            self.generate_instruction(instruction, builder, current_block);
         }
     }
 
-    fn generate_block(&mut self, label: &String, block: &Box<Vec<Instruction>>) {
-        self.str_buffer += label;
-        self.str_buffer += ":\n";
-        for instruction in block.iter() {
-            self.generate_instruction(instruction);
-        }
-    }
+    fn generate_add(
+        &mut self,
+        location: &String,
+        first: &InstructionData,
+        second: &InstructionData,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+    ) {
+        debug!("doing add!");
+        unsafe {
+            let mut left: LLVMValueRef;
+            let mut right: LLVMValueRef;
+            match first {
+                InstructionData::INT(i) => {
+                    left = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
+                }
+                _ => todo!("not implemented"),
+            }
+            match second {
+                InstructionData::INT(i) => {
+                    right = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
+                }
+                _ => todo!("not implemented"),
+            }
 
-    fn generate_stack_var(&mut self, label: &String, instruction_data: &Option<InstructionData>) {
-        if let Some(val) = instruction_data {
-            self.str_buffer += &format!("mov eax, {}", self.instruction_data_to_asm_string(val));
+            let add_instr = llvm_sys::core::LLVMBuildAdd(
+                builder,
+                left,
+                right,
+                location.to_owned().as_bytes().as_ptr() as *const i8,
+            );
+
+            llvm_sys::core::LLVMPositionBuilderAtEnd(builder, current_block);
+            llvm_sys::core::LLVMBuildRet(builder, add_instr);
         }
     }
 }
