@@ -17,8 +17,20 @@ The point of synth is to make a programming languge that gets the job done witho
 # Building
 
 ## Windows
-Install LLVM
-- https://llvm.org/docs/CMake.html
+### Installing LLVM
+WARNING: this may make you want to rip your hair out...
+
+- First install Visual Studio and install: Visual Studio Core Editor, Desktop Development With C++, MSVC & Windows 11 SDK 
+- First clone LLVM `git clone https://github.com/llvm/llvm-project.git --branch release/17.x llvm` where the release is your release number
+- Then setup your build directory inside `cd llvm && mkdir build && cd build`
+- Now, open Visual Studio and open a powershel dev terminal `View -> Terminal`
+- From within that terminal, generate the project files `cmake -DLLVM_ENABLE_PROJECTS=all ../llvm`
+- Then build & install it `cmake --build . --target install --config Release`
+- This will probably build LLVM in the `Release` directory in your build folder, put it somewhere nice like `c:\llvm\Release`
+- Add `c:\llvm\Release\bin` to the path
+- Set the env var (for whatever version you're using) `LLVM_SYS_170_PREFIX` to `c:\llvm`
+- It should work! (it likely won't)
+- In the case it doesn't you may have to copy some of the missing header files from your current `build` directory to the new build you've put in `c:\llvm`
 
 # Running
 `cargo run -- --file .\examples\dev.sy --arch x86 -o 1 --write-ir true` 

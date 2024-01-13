@@ -1,3 +1,4 @@
+extern crate llvm_sys;
 use log::{debug, error, info, warn};
 use std::io::Write;
 use std::time::Instant;
@@ -22,7 +23,10 @@ impl LLVMCodeGenerator {
 
         // self.generate_instruction(instruction);
 
-        unsafe {}
+        unsafe {
+            println!("creating context.");
+            let context = llvm_sys::core::LLVMContextCreate();
+        }
 
         let elapsed = now.elapsed();
         debug!(
