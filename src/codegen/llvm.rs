@@ -118,6 +118,9 @@ impl LLVMCodeGenerator {
             Instruction::ADD(location, first, second) => {
                 self.generate_add(location, first, second, builder, current_block)
             }
+            Instant::STACK_VAR(location, value) => {
+                self.generate_stack_var(location, value, builder, current_block)
+            }
             // Instruction::BLOCK(label, block) => self.generate_block(label, block),
             // Instruction::STACK_VAR(label, instruction_data) => {
             //     self.generate_stack_var(label, instruction_data)
@@ -134,6 +137,22 @@ impl LLVMCodeGenerator {
     ) {
         for instruction in instructions.iter() {
             self.generate_instruction(instruction, builder, current_block);
+        }
+    }
+
+    fn generate_stack_var(
+        &mut self,
+        label: &String,
+        value: &Option<InstructionData>,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+    ) {
+        unsafe {
+            llvm_sys::core::LLVMBuildAlloca(
+                builder,
+                llvm_sys::core::LLVMInt32Type(),
+                location.to_owned().as_bytes().as_ptr() as *const i8,
+            );
         }
     }
 
