@@ -118,7 +118,7 @@ impl LLVMCodeGenerator {
             Instruction::ADD(location, first, second) => {
                 self.generate_add(location, first, second, builder, current_block)
             }
-            Instant::STACK_VAR(location, value) => {
+            Instruction::STACK_VAR(location, value) => {
                 self.generate_stack_var(location, value, builder, current_block)
             }
             // Instruction::BLOCK(label, block) => self.generate_block(label, block),
@@ -148,11 +148,11 @@ impl LLVMCodeGenerator {
         current_block: *mut LLVMBasicBlock,
     ) {
         unsafe {
-            llvm_sys::core::LLVMBuildAlloca(
-                builder,
-                llvm_sys::core::LLVMInt32Type(),
-                location.to_owned().as_bytes().as_ptr() as *const i8,
-            );
+            // llvm_sys::core::LLVMBuildAlloca(
+            //     builder,
+            //     llvm_sys::core::LLVMInt32Type(),
+            //     label.to_owned().as_bytes().as_ptr() as *const i8,
+            // );
         }
     }
 
