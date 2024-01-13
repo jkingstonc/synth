@@ -14,6 +14,7 @@ use crate::{
     codegen::x86::X86CodeGenerator,
     compiler::CompilerOptions,
     optimize::{GeneralPassIROptimizer, IROptimizer},
+    symtable::SymTable,
 };
 
 mod ast;
@@ -26,6 +27,7 @@ mod ir_parse;
 mod lex;
 mod optimize;
 mod parse;
+mod symtable;
 mod token;
 mod types;
 
@@ -166,6 +168,7 @@ fn main() {
         "x86" => {
             let mut code_generator = LLVMCodeGenerator {
                 str_buffer: "".to_string(),
+                sym_table: SymTable::new(),
             };
             code_generator.generate(&main_block);
         }

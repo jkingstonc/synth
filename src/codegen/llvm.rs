@@ -10,8 +10,10 @@ use std::time::Instant;
 use std::{fs, process::Command};
 
 use crate::ir::{Instruction, InstructionData};
+use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
     pub str_buffer: String,
+    pub sym_table: SymTable<std::string::String, LLVMValueRef>,
 }
 
 /*
@@ -183,10 +185,31 @@ impl LLVMCodeGenerator {
             let ptr = c_str.as_ptr();
             let alloca_instruction =
                 llvm_sys::core::LLVMBuildAlloca(builder, llvm_sys::core::LLVMInt32Type(), ptr);
-            // if let Some(val) = value {
-            //     let assigned_value_ref = self.instruction_data_to_llvm_value_ref();
-            //     llvm_sys::core::LLVMBuildStore(builder, assigned_value_ref, alloca_instruction);
-            // }
+            if let Some(val) = value {
+                match val {
+                    InstructionData::REF(r) => {
+                        let initializer_value =
+                            self.sym_table.get(r.value.to_string()).unwrap().clone();
+                        llvm_sys::core::LLVMBuildStore(
+                            builder,
+                            initializer_value,
+                            alloca_instruction,
+                        );
+                    }
+                    InstructionData::INT(i) => {
+                        llvm_sys::core::LLVMBuildStore(
+                            builder,
+                            LLVMConstInt(
+                                llvm_sys::core::LLVMInt32Type(),
+                                (*i).try_into().unwrap(),
+                                1,
+                            ),
+                            alloca_instruction,
+                        );
+                    }
+                    _ => todo!(),
+                }
+            }
             None
         }
     }
@@ -222,8 +245,10 @@ impl LLVMCodeGenerator {
                 location.to_owned().as_bytes().as_ptr() as *const i8,
             );
 
-            llvm_sys::core::LLVMPositionBuilderAtEnd(builder, current_block);
-            llvm_sys::core::LLVMBuildRet(builder, add_instr);
+            self.sym_table.add(location.to_string(), add_instr);
+
+            // llvm_sys::core::LLVMPositionBuilderAtEnd(builder, current_block);
+            // llvm_sys::core::LLVMBuildRet(builder, add_instr);
             None
         }
     }
