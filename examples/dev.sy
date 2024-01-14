@@ -1,3 +1,4 @@
-const x = "34346"
+
+const x = "hello, world!"
 
 printf(x)
