@@ -1,7 +1,7 @@
 // a ref refers to a location in memory (this is abstracted away, it could be a register, the stack etc. it's up to the code-generator to decide that)
 #[derive(Debug, Clone)]
 pub struct Ref {
-    pub value: std::string::String,
+    pub value: String,
 }
 
 // #[derive(Debug, Clone)]
@@ -26,30 +26,30 @@ pub enum Instruction {
     // pub instruction_type: InstructionType,
     // pub data: Option<IRValue>,
     // // this is the value the struction assigns (i.e. %0 etc)
-    // pub assignment_name: Option<std::string::String>,
+    // pub assignment_name: Option<String>,
     NONE,
     PROGRAM(Box<Vec<Instruction>>),
-    BLOCK(std::string::String, Box<Vec<Instruction>>),
+    BLOCK(String, Box<Vec<Instruction>>),
     // integer addition
-    ADD(std::string::String, IRValue, IRValue),
+    ADD(String, IRValue, IRValue),
     // integer subtraction
-    SUB(std::string::String, IRValue, IRValue),
+    SUB(String, IRValue, IRValue),
     // load instruction (todo this should depend on the type?)
-    LOAD(std::string::String, Ref),
+    LOAD(String, Ref),
     // var instruction
     // this will allocate a variable some memory on the stack
     // for now it can not be initialised. this is fine as we know this will be on the stack
     // so can be assigned multiple times (not a SSA in registers)
-    STACK_VAR(std::string::String, Option<IRValue>),
+    STACK_VAR(String, Option<IRValue>),
     // conditional branch (as we are branching to other blocks this should be the last)
     // first arg is the condition, second is the body, third is the else
     COND_BR(IRValue, Box<Instruction>, Option<Box<Instruction>>),
     // first arg is the function to call, the second is the first param (todo support more params)
-    CALL(std::string::String, IRValue, IRValue),
+    CALL(String, String, IRValue),
 }
 
 impl Instruction {
-    pub fn to_string_for_writing(&self) -> std::string::String {
+    pub fn to_string_for_writing(&self) -> String {
         match self {
             Instruction::BLOCK(location, instruction_data) => {
                 let mut s = "".to_string();
@@ -77,7 +77,7 @@ impl Instruction {
             }
             Instruction::CALL(location, callee, arg) => {
                 format!(
-                    "{:<15} = {:<10} {:?} args [{:?}]",
+                    "{:<15} = {:<10} {} args [{:?}]",
                     location, "call", callee, arg
                 )
             }

@@ -12,7 +12,8 @@ pub struct IRInterpreter<'a> {
     pub counter: usize,
     // pub instruction: Instruction,
     // todo for now this is an i32 but should be a generic 'value'
-    pub variables_map: HashMap<std::string::String, IRValue>,
+    // this should be a symtable
+    pub variables_map: HashMap<String, IRValue>,
 }
 
 /*
@@ -22,6 +23,10 @@ Still a massive WIP as we need to decide on the instruction model (SSA [Single S
 impl IRInterpreter<'_> {
     pub fn execute(&mut self, instruction: &Instruction) -> Option<IRValue> {
         let now = Instant::now();
+        self.variables_map.insert(
+            "printf".to_string(),
+            IRValue::INTRINSIC("printf".to_string()),
+        );
         let result = self.execute_instruction(instruction);
         debug!("vars {:?}", self.variables_map);
         let elapsed = now.elapsed();
@@ -67,7 +72,7 @@ impl IRInterpreter<'_> {
         result
     }
 
-    fn execute_load(&mut self, label: &std::string::String, ref_value: &Ref) -> Option<IRValue> {
+    fn execute_load(&mut self, label: &String, ref_value: &Ref) -> Option<IRValue> {
         if let Some(val) = self.variables_map.get(&ref_value.value) {
             self.variables_map.insert(label.to_string(), val.clone());
         } else if ref_value.value == "printf" {
@@ -84,11 +89,7 @@ impl IRInterpreter<'_> {
         None
     }
 
-    fn execute_stack_var(
-        &mut self,
-        label: &std::string::String,
-        value: &Option<IRValue>,
-    ) -> Option<IRValue> {
+    fn execute_stack_var(&mut self, label: &String, value: &Option<IRValue>) -> Option<IRValue> {
         if let Some(data) = value {
             match data {
                 IRValue::INT(i) => self.variables_map.insert(label.to_string(), data.clone()),
@@ -108,23 +109,13 @@ impl IRInterpreter<'_> {
         None
     }
 
-    fn execute_call(
-        &mut self,
-        label: &std::string::String,
-        callee: &IRValue,
-        arg: &IRValue,
-    ) -> Option<IRValue> {
-        let mut callee_data: IRValue;
-        match callee {
-            IRValue::REF(r) => {
-                callee_data = self
-                    .variables_map
-                    .get(&r.value)
-                    .expect("could not find var")
-                    .clone();
-            }
-            _ => panic!("callee lookup should be ref"),
-        }
+    fn execute_call(&mut self, label: &String, callee: &String, arg: &IRValue) -> Option<IRValue> {
+        debug!("ummm {} {:?}", callee.to_string(), self.variables_map);
+        let mut callee_data = self
+            .variables_map
+            .get(callee)
+            .expect("could not find var")
+            .clone();
 
         match callee_data {
             IRValue::INTRINSIC(i) => {
@@ -142,6 +133,7 @@ impl IRInterpreter<'_> {
                                 .clone()
                         }
                         IRValue::INT(_) => arg_data = arg.clone(),
+                        IRValue::STRING(_) => arg_data = arg.clone(),
                         _ => panic!("couldn't print instruction data :("),
                     };
 
@@ -158,12 +150,7 @@ impl IRInterpreter<'_> {
         None
     }
 
-    fn execute_add(
-        &mut self,
-        label: &std::string::String,
-        left: &IRValue,
-        right: &IRValue,
-    ) -> Option<IRValue> {
+    fn execute_add(&mut self, label: &String, left: &IRValue, right: &IRValue) -> Option<IRValue> {
         let mut lhs = 0;
         let mut rhs = 0;
         match left {

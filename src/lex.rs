@@ -2,7 +2,7 @@ use crate::token::Token;
 
 pub struct Lexer {
     pub current: usize,
-    pub program: Box<std::string::String>,
+    pub program: Box<String>,
     // todo this is bad practice
     pub tokens: Box<Vec<Token>>,
 }
@@ -11,12 +11,12 @@ impl Lexer {
     pub fn new() -> Lexer {
         Lexer {
             current: 0,
-            program: Box::new(std::string::String::from("")),
+            program: Box::new(String::from("")),
             tokens: Box::new(vec![]),
         }
     }
 
-    pub fn lex(&mut self, program: Box<std::string::String>) {
+    pub fn lex(&mut self, program: Box<String>) {
         //-> Box<Vec<Token>>{
 
         self.program = program;
@@ -207,7 +207,7 @@ impl Lexer {
         //self.current+=1;
     }
 
-    fn is_keyword(&self, keyword: std::string::String) -> bool {
+    fn is_keyword(&self, keyword: String) -> bool {
         let mut matched = true;
         for i in 0..keyword.chars().count() {
             if self.program.chars().nth(self.current + i).is_some()
@@ -236,7 +236,7 @@ impl Lexer {
     }
 
     fn number(&mut self) {
-        let mut s = std::string::String::from("");
+        let mut s = String::from("");
         while !self.end()
             && (self.program.chars().nth(self.current).unwrap().is_digit(10)
                 || (self.program.chars().nth(self.current).unwrap() == '.'))
@@ -248,7 +248,7 @@ impl Lexer {
     }
 
     fn identifier(&mut self) {
-        let mut s = std::string::String::from("");
+        let mut s = String::from("");
         //println!("doing identifier for char {}.", self.program.chars().nth(self.current).unwrap());
         while !self.end()
             && (self
@@ -269,7 +269,7 @@ impl Lexer {
     fn string(&mut self) {
         let first_char = self.program.chars().nth(self.current).unwrap();
         self.current += 1;
-        let mut s = std::string::String::from("");
+        let mut s = String::from("");
         while !self.end()
             && !self
                 .program

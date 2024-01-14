@@ -1,5 +1,8 @@
 
 
 
+comp printf("hi")
 
 const x = "hello, synth!"
+
+printf(x)

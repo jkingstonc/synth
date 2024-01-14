@@ -29,9 +29,9 @@ pub enum Token {
 
     EQUAL,
 
-    NUMBER(std::string::String),
-    STRING(std::string::String),
-    IDENTIFIER(std::string::String),
+    NUMBER(String),
+    STRING(String),
+    IDENTIFIER(String),
 
     VAR,
 

@@ -28,7 +28,7 @@ pub struct Call<'a> {
 
 #[derive(Debug)]
 pub struct Decl<'a> {
-    pub identifier: std::string::String,
+    pub identifier: String,
     // todo types
     // pub typ: Type,
     pub requires_infering: bool,
@@ -89,8 +89,8 @@ pub enum ParsedAST<'a> {
     // RET(Option<Box<ParsedAST<'a>>>),
     DECL(Decl<'a>),
     ASSIGN(Assign<'a>),
-    IDENTIFIER(std::string::String),
-    STRING(std::string::String),
+    IDENTIFIER(String),
+    STRING(String),
     // FN(Fn<'a>),
     NUMBER(Number),
     LEFT_UNARY(LeftUnary<'a>),

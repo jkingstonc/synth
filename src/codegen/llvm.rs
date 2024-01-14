@@ -17,7 +17,7 @@ use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
     pub str_buffer: String,
-    pub sym_table: SymTable<std::string::String, LLVMValueRef>,
+    pub sym_table: SymTable<String, LLVMValueRef>,
 }
 
 /*
@@ -241,63 +241,53 @@ impl LLVMCodeGenerator {
     fn generate_call(
         &mut self,
         label: &String,
-        callee: &IRValue,
+        callee: &String,
         arg: &IRValue,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            match callee {
+            // let func_value = self
+            //     .sym_table
+            //     .get(r.value.to_string())
+            //     .expect("expected function value");
+
+            let func_value = self
+                .sym_table
+                .get(callee.to_owned())
+                .expect("expected printf");
+
+            let function_type = llvm_sys::core::LLVMFunctionType(
+                LLVMInt32Type(),
+                // std::ptr::null_mut(),
+                &mut LLVMPointerType(LLVMInt8Type(), 0),
+                1,
+                0,
+            );
+
+            let printf_var = CString::new("call_result").expect("i am a c string");
+            let printf_var_ptr = printf_var.as_ptr();
+
+            match arg {
                 IRValue::REF(r) => {
-                    // let func_value = self
-                    //     .sym_table
-                    //     .get(r.value.to_string())
-                    //     .expect("expected function value");
-
-                    let func_value = self
+                    debug!("umm {:?}", self.sym_table);
+                    let mut arg0 = self
                         .sym_table
-                        .get("printf".to_owned())
-                        .expect("expected printf");
+                        .get(r.value.to_string())
+                        .expect("expected value")
+                        .clone();
 
-                    let function_type = llvm_sys::core::LLVMFunctionType(
-                        LLVMInt32Type(),
-                        // std::ptr::null_mut(),
-                        &mut LLVMPointerType(LLVMInt8Type(), 0),
+                    LLVMBuildCall2(
+                        builder,
+                        function_type,
+                        *func_value,
+                        &mut arg0,
+                        // &mut LLVMConstPointerNull(LLVMVoidType()),
                         1,
-                        0,
+                        printf_var_ptr,
                     );
-
-                    // let c_str = CString::new("hello, world!").expect("i am a c string");
-                    // let ptr = c_str.as_ptr();
-                    // let c_str_var = CString::new("hello_world").expect("i am a c string");
-                    // let ptr_var = c_str_var.as_ptr();
-                    // let mut string_value = LLVMBuildGlobalStringPtr(builder, ptr, ptr_var);
-                    let printf_var = CString::new("printf").expect("i am a c string");
-                    let printf_var_ptr = printf_var.as_ptr();
-
-                    match arg {
-                        IRValue::REF(r) => {
-                            debug!("umm {:?}", self.sym_table);
-                            let mut arg0 = self
-                                .sym_table
-                                .get(r.value.to_string())
-                                .expect("expected value")
-                                .clone();
-
-                            LLVMBuildCall2(
-                                builder,
-                                function_type,
-                                *func_value,
-                                &mut arg0,
-                                // &mut LLVMConstPointerNull(LLVMVoidType()),
-                                1,
-                                printf_var_ptr,
-                            );
-                        }
-                        _ => todo!(),
-                    }
                 }
-                _ => panic!(),
+                _ => todo!(),
             }
         }
         None

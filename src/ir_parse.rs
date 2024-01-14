@@ -222,18 +222,6 @@ impl IRParser<'_> {
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<IRValue>) {
-        // let local_id = self.locals_counter;
-        // self.locals_counter += 1;
-        // self.write_instruction_to_block(
-        //     Instruction::STACK_VAR(local_id.to_string(), Some(IRValue::STRING(s.to_string()))),
-        //     current_block,
-        // );
-        // (
-        //     None,
-        //     Some(IRValue::REF(Ref {
-        //         value: local_id.to_string(),
-        //     })),
-        // )
         (None, Some(IRValue::STRING(s.to_string())))
     }
 
@@ -249,18 +237,6 @@ impl IRParser<'_> {
             let (_, data) = self.gen_ast(value, current_block);
             instruction_data = data;
         }
-
-        // match current_block
-        // let Instruction::BLOCK(_, instructions) = current_block;
-        // current_block.push(Instruction::STACK_VAR(
-        //     decl.identifier.clone(),
-        //     instruction_data,
-        // ));
-        // instructions.push(Instruction {
-        //     instruction_type: InstructionType::STACK_VAR,
-        //     data: instruction_data,
-        //     assignment_name: Some(decl.identifier.clone()),
-        // });
         self.counter += 1;
         (
             Some(Instruction::STACK_VAR(
@@ -340,7 +316,16 @@ impl IRParser<'_> {
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<IRValue>) {
         // todo a call should just be a string reference to a function
-        let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
+        let mut f: String;
+
+        match call.callee.as_ref() {
+            ParsedAST::IDENTIFIER(i) => {
+                f = i.to_string();
+            }
+            _ => todo!(),
+        }
+
+        // let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
         let mut first_arg = call.args[0].borrow_mut();
         let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
 
@@ -350,7 +335,8 @@ impl IRParser<'_> {
         self.write_instruction_to_block(
             Instruction::CALL(
                 locals_id.to_string(),
-                callee_data.expect("expected callee data"),
+                // callee_data.expect("expected callee data"),
+                f.to_string(),
                 first_arg_data.expect("expected arg data"),
             ),
             current_block,
@@ -406,7 +392,7 @@ impl IRParser<'_> {
 
     fn gen_identifier(
         &mut self,
-        identifier: &mut std::string::String,
+        identifier: &mut String,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<IRValue>) {

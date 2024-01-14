@@ -88,7 +88,7 @@ impl Parser<'_> {
         match first {
             Token::CONST => {
                 self.consume(current);
-                let identifier: std::string::String;
+                let identifier: String;
                 match self.consume(current) {
                     Token::IDENTIFIER(i) => identifier = i.to_string(),
                     _ => panic!(),
@@ -122,7 +122,7 @@ impl Parser<'_> {
         //                     _ => {}
         //                 };
 
-        //                 let mut ident: std::string::String;
+        //                 let mut ident: String;
         //                 match identifier {
         //                     Token::IDENTIFIER(i) => ident = i.to_string(),
         //                     _ => panic!()
@@ -135,7 +135,7 @@ impl Parser<'_> {
         //                 let identifier = self.consume(current);
         //                 let typ = Type { mutability: Mutability::CONSTANT, primative: Primative::INCOMPLETE, reference: false };
         //                 let value = Some(Box::new(self.function(current)));
-        //                 let mut ident: std::string::String;
+        //                 let mut ident: String;
         //                 match identifier {
         //                     Token::IDENTIFIER(i) => ident = i.to_string(),
         //                     _ => panic!()
@@ -164,7 +164,7 @@ impl Parser<'_> {
 
         //                 let mut value: Option<Box<ParsedAST>> = None;
 
-        //                 let mut ident: std::string::String;
+        //                 let mut ident: String;
         //                 match identifier {
         //                     Token::IDENTIFIER(i) => ident = i.to_string(),
         //                     _ => panic!()
