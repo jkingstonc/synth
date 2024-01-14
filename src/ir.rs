@@ -6,12 +6,12 @@ pub struct Ref {
 
 // #[derive(Debug, Clone)]
 // pub struct Bin {
-//     pub left: InstructionData,
-//     pub right: InstructionData,
+//     pub left: IRValue,
+//     pub right: IRValue,
 // }
 
 #[derive(Debug, Clone)]
-pub enum InstructionData {
+pub enum IRValue {
     REF(Ref),
     INT(i32),
     FLOAT(f32),
@@ -24,28 +24,28 @@ pub enum InstructionData {
 #[derive(Debug, Clone)]
 pub enum Instruction {
     // pub instruction_type: InstructionType,
-    // pub data: Option<InstructionData>,
+    // pub data: Option<IRValue>,
     // // this is the value the struction assigns (i.e. %0 etc)
     // pub assignment_name: Option<std::string::String>,
     NONE,
     PROGRAM(Box<Vec<Instruction>>),
     BLOCK(std::string::String, Box<Vec<Instruction>>),
     // integer addition
-    ADD(std::string::String, InstructionData, InstructionData),
+    ADD(std::string::String, IRValue, IRValue),
     // integer subtraction
-    SUB(std::string::String, InstructionData, InstructionData),
+    SUB(std::string::String, IRValue, IRValue),
     // load instruction (todo this should depend on the type?)
     LOAD(std::string::String, Ref),
     // var instruction
     // this will allocate a variable some memory on the stack
     // for now it can not be initialised. this is fine as we know this will be on the stack
     // so can be assigned multiple times (not a SSA in registers)
-    STACK_VAR(std::string::String, Option<InstructionData>),
+    STACK_VAR(std::string::String, Option<IRValue>),
     // conditional branch (as we are branching to other blocks this should be the last)
     // first arg is the condition, second is the body, third is the else
-    COND_BR(InstructionData, Box<Instruction>, Option<Box<Instruction>>),
+    COND_BR(IRValue, Box<Instruction>, Option<Box<Instruction>>),
     // first arg is the function to call, the second is the first param (todo support more params)
-    CALL(std::string::String, InstructionData, InstructionData),
+    CALL(std::string::String, IRValue, IRValue),
 }
 
 impl Instruction {
@@ -106,11 +106,11 @@ impl Instruction {
 
 #[cfg(test)]
 mod tests {
-    use crate::ir::InstructionData;
+    use crate::ir::IRValue;
 
     #[test]
     fn can_construct_int_data() {
-        let int_data = InstructionData::INT(123);
+        let int_data = IRValue::INT(123);
         assert_eq!(true, true);
     }
 }

@@ -4,7 +4,7 @@ use log::{debug, info};
 
 use crate::{
     compiler::CompilerOptions,
-    ir::{Instruction, InstructionData, Ref},
+    ir::{IRValue, Instruction, Ref},
 };
 
 pub struct IRInterpreter<'a> {
@@ -12,7 +12,7 @@ pub struct IRInterpreter<'a> {
     pub counter: usize,
     // pub instruction: Instruction,
     // todo for now this is an i32 but should be a generic 'value'
-    pub variables_map: HashMap<std::string::String, InstructionData>,
+    pub variables_map: HashMap<std::string::String, IRValue>,
 }
 
 /*
@@ -20,7 +20,7 @@ This will walk through the instructions and evaluate them (no JIT yet :().
 Still a massive WIP as we need to decide on the instruction model (SSA [Single Static Assignment] etc).
 */
 impl IRInterpreter<'_> {
-    pub fn execute(&mut self, instruction: &Instruction) -> Option<InstructionData> {
+    pub fn execute(&mut self, instruction: &Instruction) -> Option<IRValue> {
         let now = Instant::now();
         let result = self.execute_instruction(instruction);
         debug!("vars {:?}", self.variables_map);
@@ -33,7 +33,7 @@ impl IRInterpreter<'_> {
         result
     }
 
-    fn execute_instruction(&mut self, instruction: &Instruction) -> Option<InstructionData> {
+    fn execute_instruction(&mut self, instruction: &Instruction) -> Option<IRValue> {
         match instruction {
             Instruction::PROGRAM(instructions) => self.execute_program(instructions.clone()),
             Instruction::BLOCK(_, instructions) => self.excecute_block(instructions.clone()),
@@ -51,38 +51,32 @@ impl IRInterpreter<'_> {
         }
     }
 
-    fn execute_program(&mut self, instructions: Box<Vec<Instruction>>) -> Option<InstructionData> {
-        let mut result: Option<InstructionData> = None;
+    fn execute_program(&mut self, instructions: Box<Vec<Instruction>>) -> Option<IRValue> {
+        let mut result: Option<IRValue> = None;
         for instruction in instructions.to_vec() {
             result = self.execute_instruction(&instruction);
         }
         result
     }
 
-    fn excecute_block(&mut self, instructions: Box<Vec<Instruction>>) -> Option<InstructionData> {
-        let mut result: Option<InstructionData> = None;
+    fn excecute_block(&mut self, instructions: Box<Vec<Instruction>>) -> Option<IRValue> {
+        let mut result: Option<IRValue> = None;
         for instruction in instructions.to_vec() {
             result = self.execute_instruction(&instruction);
         }
         result
     }
 
-    fn execute_load(
-        &mut self,
-        label: &std::string::String,
-        ref_value: &Ref,
-    ) -> Option<InstructionData> {
+    fn execute_load(&mut self, label: &std::string::String, ref_value: &Ref) -> Option<IRValue> {
         if let Some(val) = self.variables_map.get(&ref_value.value) {
             self.variables_map.insert(label.to_string(), val.clone());
         } else if ref_value.value == "printf" {
-            self.variables_map.insert(
-                label.to_string(),
-                InstructionData::INTRINSIC("printf".to_string()),
-            );
+            self.variables_map
+                .insert(label.to_string(), IRValue::INTRINSIC("printf".to_string()));
         } else if ref_value.value == "SYNTH_FILENAME" {
             self.variables_map.insert(
                 label.to_string(),
-                InstructionData::STRING(self.compiler_options.current_file.to_string()),
+                IRValue::STRING(self.compiler_options.current_file.to_string()),
             );
         } else {
             panic!("couldn't find var");
@@ -93,20 +87,14 @@ impl IRInterpreter<'_> {
     fn execute_stack_var(
         &mut self,
         label: &std::string::String,
-        value: &Option<InstructionData>,
-    ) -> Option<InstructionData> {
+        value: &Option<IRValue>,
+    ) -> Option<IRValue> {
         if let Some(data) = value {
             match data {
-                InstructionData::INT(i) => {
-                    self.variables_map.insert(label.to_string(), data.clone())
-                }
-                InstructionData::FLOAT(f) => {
-                    self.variables_map.insert(label.to_string(), data.clone())
-                }
-                InstructionData::STRING(s) => {
-                    self.variables_map.insert(label.to_string(), data.clone())
-                }
-                InstructionData::REF(r) => {
+                IRValue::INT(i) => self.variables_map.insert(label.to_string(), data.clone()),
+                IRValue::FLOAT(f) => self.variables_map.insert(label.to_string(), data.clone()),
+                IRValue::STRING(s) => self.variables_map.insert(label.to_string(), data.clone()),
+                IRValue::REF(r) => {
                     if let Some(v) = self.variables_map.get(&r.value) {
                         self.variables_map.insert(label.to_string(), v.clone());
                     } else {
@@ -123,12 +111,12 @@ impl IRInterpreter<'_> {
     fn execute_call(
         &mut self,
         label: &std::string::String,
-        callee: &InstructionData,
-        arg: &InstructionData,
-    ) -> Option<InstructionData> {
-        let mut callee_data: InstructionData;
+        callee: &IRValue,
+        arg: &IRValue,
+    ) -> Option<IRValue> {
+        let mut callee_data: IRValue;
         match callee {
-            InstructionData::REF(r) => {
+            IRValue::REF(r) => {
                 callee_data = self
                     .variables_map
                     .get(&r.value)
@@ -139,29 +127,29 @@ impl IRInterpreter<'_> {
         }
 
         match callee_data {
-            InstructionData::INTRINSIC(i) => {
+            IRValue::INTRINSIC(i) => {
                 if i == "printf" {
                     // assume that args are passed in as locals
-                    let mut arg_data: InstructionData;
+                    let mut arg_data: IRValue;
 
                     // todo global formatter in ir.rs
                     match arg {
-                        InstructionData::REF(r) => {
+                        IRValue::REF(r) => {
                             arg_data = self
                                 .variables_map
                                 .get(&r.value)
                                 .expect("expected arg as ref")
                                 .clone()
                         }
-                        InstructionData::INT(_) => arg_data = arg.clone(),
+                        IRValue::INT(_) => arg_data = arg.clone(),
                         _ => panic!("couldn't print instruction data :("),
                     };
 
                     match arg_data {
-                        InstructionData::INT(i) => println!("{}", i),
-                        InstructionData::FLOAT(f) => println!("{}", f),
-                        InstructionData::STRING(s) => println!("{}", s),
-                        _ => panic!("couldn't print InstructionData"),
+                        IRValue::INT(i) => println!("{}", i),
+                        IRValue::FLOAT(f) => println!("{}", f),
+                        IRValue::STRING(s) => println!("{}", s),
+                        _ => panic!("couldn't print IRValue"),
                     };
                 }
             }
@@ -173,17 +161,17 @@ impl IRInterpreter<'_> {
     fn execute_add(
         &mut self,
         label: &std::string::String,
-        left: &InstructionData,
-        right: &InstructionData,
-    ) -> Option<InstructionData> {
+        left: &IRValue,
+        right: &IRValue,
+    ) -> Option<IRValue> {
         let mut lhs = 0;
         let mut rhs = 0;
         match left {
-            InstructionData::INT(i) => lhs = *i,
-            InstructionData::REF(r) => {
+            IRValue::INT(i) => lhs = *i,
+            IRValue::REF(r) => {
                 if let Some(v) = self.variables_map.get(&r.value) {
                     match v {
-                        InstructionData::INT(i) => lhs = *i,
+                        IRValue::INT(i) => lhs = *i,
                         _ => panic!("unsupported type"),
                     }
                 }
@@ -191,11 +179,11 @@ impl IRInterpreter<'_> {
             _ => panic!("unsupported type for execution"),
         }
         match right {
-            InstructionData::INT(i) => rhs = *i,
-            InstructionData::REF(r) => {
+            IRValue::INT(i) => rhs = *i,
+            IRValue::REF(r) => {
                 if let Some(v) = self.variables_map.get(&r.value) {
                     match v {
-                        InstructionData::INT(i) => rhs = *i,
+                        IRValue::INT(i) => rhs = *i,
                         _ => panic!("unsupported type"),
                     }
                 }
@@ -203,28 +191,28 @@ impl IRInterpreter<'_> {
             _ => panic!("unsupported type for execution"),
         }
         self.variables_map
-            .insert(label.to_string(), InstructionData::INT(lhs + rhs));
-        Some(InstructionData::INT(lhs + rhs))
+            .insert(label.to_string(), IRValue::INT(lhs + rhs));
+        Some(IRValue::INT(lhs + rhs))
     }
 
-    fn evaluate_instruction_data_for_booleanness(&self, value: &InstructionData) -> bool {
+    fn evaluate_instruction_data_for_booleanness(&self, value: &IRValue) -> bool {
         match value {
-            InstructionData::REF(r) => {
+            IRValue::REF(r) => {
                 let val = self.variables_map.get(&r.value).expect("couldn't find var");
                 self.evaluate_instruction_data_for_booleanness(val)
             }
-            InstructionData::INT(i) => *i > 0,
-            InstructionData::FLOAT(f) => *f > 0.0,
+            IRValue::INT(i) => *i > 0,
+            IRValue::FLOAT(f) => *f > 0.0,
             _ => panic!("unknown condition type"),
         }
     }
 
     fn execute_cond_br(
         &mut self,
-        condition: &InstructionData,
+        condition: &IRValue,
         body: &Box<Instruction>,
         else_body: &Option<Box<Instruction>>,
-    ) -> Option<InstructionData> {
+    ) -> Option<IRValue> {
         debug!("{:?}", condition);
         let condition_booleanness = self.evaluate_instruction_data_for_booleanness(condition);
         if condition_booleanness {

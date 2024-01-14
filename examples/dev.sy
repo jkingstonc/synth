@@ -3,6 +3,3 @@
 
 
 const x = "hello, synth!"
-
-
-printf(x)

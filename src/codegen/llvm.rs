@@ -13,7 +13,7 @@ use std::io::Write;
 use std::time::Instant;
 use std::{fs, process::Command};
 
-use crate::ir::{Instruction, InstructionData, Ref};
+use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
     pub str_buffer: String,
@@ -241,14 +241,14 @@ impl LLVMCodeGenerator {
     fn generate_call(
         &mut self,
         label: &String,
-        callee: &InstructionData,
-        arg: &InstructionData,
+        callee: &IRValue,
+        arg: &IRValue,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
         unsafe {
             match callee {
-                InstructionData::REF(r) => {
+                IRValue::REF(r) => {
                     // let func_value = self
                     //     .sym_table
                     //     .get(r.value.to_string())
@@ -276,7 +276,7 @@ impl LLVMCodeGenerator {
                     let printf_var_ptr = printf_var.as_ptr();
 
                     match arg {
-                        InstructionData::REF(r) => {
+                        IRValue::REF(r) => {
                             debug!("umm {:?}", self.sym_table);
                             let mut arg0 = self
                                 .sym_table
@@ -306,18 +306,21 @@ impl LLVMCodeGenerator {
     fn generate_stack_var(
         &mut self,
         label: &String,
-        value: &Option<InstructionData>,
+        value: &Option<IRValue>,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
         unsafe {
             let c_str = CString::new(label.as_str()).unwrap();
             let ptr = c_str.as_ptr();
-            let alloca_instruction =
-                llvm_sys::core::LLVMBuildAlloca(builder, llvm_sys::core::LLVMInt32Type(), ptr);
             if let Some(val) = value {
                 match val {
-                    InstructionData::REF(r) => {
+                    IRValue::REF(r) => {
+                        let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
+                            builder,
+                            llvm_sys::core::LLVMInt32Type(),
+                            ptr,
+                        );
                         let initializer_value =
                             self.sym_table.get(r.value.to_string()).unwrap().clone();
                         let store_instruction = llvm_sys::core::LLVMBuildStore(
@@ -327,7 +330,12 @@ impl LLVMCodeGenerator {
                         );
                         self.sym_table.add(label.to_string(), store_instruction);
                     }
-                    InstructionData::INT(i) => {
+                    IRValue::INT(i) => {
+                        let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
+                            builder,
+                            llvm_sys::core::LLVMInt32Type(),
+                            ptr,
+                        );
                         let store_instruction = llvm_sys::core::LLVMBuildStore(
                             builder,
                             LLVMConstInt(
@@ -339,14 +347,24 @@ impl LLVMCodeGenerator {
                         );
                         self.sym_table.add(label.to_string(), store_instruction);
                     }
-                    InstructionData::STRING(s) => {
+                    IRValue::STRING(s) => {
                         let c_str = CString::new(s.to_string()).expect("i am a c string");
                         let ptr = c_str.as_ptr();
-                        let c_str_label = CString::new(label.to_string()).expect("i am a c string");
+                        let c_str_label =
+                            CString::new(label.to_string() + "_global").expect("i am a c string");
                         let ptr_label = c_str_label.as_ptr();
                         let mut llvm_string_value =
                             LLVMBuildGlobalStringPtr(builder, ptr, ptr_label);
-                        self.sym_table.add(label.to_string(), llvm_string_value);
+                        // we need to load it locally
+                        let c_str_label = CString::new(label.to_string()).expect("i am a c string");
+                        let ptr_label = c_str_label.as_ptr();
+                        let mut llvm_string_load = LLVMBuildLoad2(
+                            builder,
+                            LLVMPointerType(LLVMInt8Type(), 0),
+                            llvm_string_value,
+                            ptr_label,
+                        );
+                        self.sym_table.add(label.to_string(), llvm_string_load);
                     }
                     _ => todo!(),
                 }
@@ -358,8 +376,8 @@ impl LLVMCodeGenerator {
     fn generate_add(
         &mut self,
         location: &String,
-        first: &InstructionData,
-        second: &InstructionData,
+        first: &IRValue,
+        second: &IRValue,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
@@ -367,13 +385,13 @@ impl LLVMCodeGenerator {
             let mut left: LLVMValueRef;
             let mut right: LLVMValueRef;
             match first {
-                InstructionData::INT(i) => {
+                IRValue::INT(i) => {
                     left = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
                 }
                 _ => todo!("not implemented"),
             }
             match second {
-                InstructionData::INT(i) => {
+                IRValue::INT(i) => {
                     right = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
                 }
                 _ => todo!("not implemented"),

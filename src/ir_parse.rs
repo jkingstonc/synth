@@ -5,7 +5,7 @@ use log::debug;
 use crate::{
     ast::{Binary, Block, Call, Decl, If, LeftUnary, Number, ParsedAST, Program},
     compiler::CompilerOptions,
-    ir::{Instruction, InstructionData, Ref},
+    ir::{IRValue, Instruction, Ref},
     ir_interpret::IRInterpreter,
     token::Token,
 };
@@ -53,7 +53,7 @@ impl IRParser<'_> {
         );
         // let main_block = Instruction {
         //     instruction_type: InstructionType::BLOCK,
-        //     data: Some(InstructionData::INSTRUCTIONS(instructions)),
+        //     data: Some(IRValue::INSTRUCTIONS(instructions)),
         //     assignment_name: None,
         // };
         // return Box::new(vec![main_block]);
@@ -68,13 +68,13 @@ impl IRParser<'_> {
         instructions.push(instruction);
     }
 
-    // todo we need to return the InstructionData with the resolved value!!!
+    // todo we need to return the IRValue with the resolved value!!!
     fn gen_ast(
         &mut self,
         ast: &mut ParsedAST,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         match ast {
             ParsedAST::PROGRAM(program) => self.gen_program(program, current_block),
             ParsedAST::STMT(stmt) => self.gen_stmt(stmt, current_block),
@@ -109,7 +109,7 @@ impl IRParser<'_> {
         program: &mut Program,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         for item in program.body.iter_mut() {
             let (instruction, _) = self.gen_ast(item, current_block);
             if let Some(instruction_unwrapped) = instruction {
@@ -127,7 +127,7 @@ impl IRParser<'_> {
         stmt: &mut Box<ParsedAST>,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         self.gen_ast(stmt, current_block)
     }
 
@@ -136,18 +136,18 @@ impl IRParser<'_> {
         binary: &mut Binary,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         let (_, left_address) = self.gen_ast(&mut binary.left, current_block);
         let (_, right_address) = self.gen_ast(&mut binary.right, current_block);
 
-        let l: InstructionData;
+        let l: IRValue;
         match left_address {
             Some(left) => {
                 l = left;
             }
             _ => panic!(),
         };
-        let r: InstructionData;
+        let r: IRValue;
         match right_address {
             Some(right) => {
                 r = right;
@@ -164,11 +164,11 @@ impl IRParser<'_> {
 
                 let mut should_optimize = true;
                 match l {
-                    InstructionData::INT(_) => {}
+                    IRValue::INT(_) => {}
                     _ => should_optimize = false,
                 };
                 match r {
-                    InstructionData::INT(_) => {}
+                    IRValue::INT(_) => {}
                     _ => should_optimize = false,
                 };
 
@@ -176,15 +176,15 @@ impl IRParser<'_> {
                     let mut lhs_value = 0;
                     let mut rhs_value = 0;
                     match l {
-                        InstructionData::INT(i) => lhs_value = i,
+                        IRValue::INT(i) => lhs_value = i,
                         _ => todo!("unsupported type for add optimization"),
                     };
                     match r {
-                        InstructionData::INT(i) => rhs_value = i,
+                        IRValue::INT(i) => rhs_value = i,
                         _ => todo!("unsupported type for add optimization"),
                     };
 
-                    (None, Some(InstructionData::INT(lhs_value + rhs_value)))
+                    (None, Some(IRValue::INT(lhs_value + rhs_value)))
                 } else {
                     self.write_instruction_to_block(
                         Instruction::ADD(format!("{:?}", locals_id), l, r),
@@ -193,7 +193,7 @@ impl IRParser<'_> {
                     (
                         // Some(Instruction::ADD(format!("{:?}", locals_id), l, r)),
                         None,
-                        Some(InstructionData::REF(Ref {
+                        Some(IRValue::REF(Ref {
                             value: format!("{:?}", locals_id),
                         })),
                     )
@@ -208,11 +208,11 @@ impl IRParser<'_> {
         num: &mut Number,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         self.counter += 1;
         match num {
-            Number::INTEGER(i) => (None, Some(InstructionData::INT(i.clone()))),
-            Number::FLOAT(f) => (None, Some(InstructionData::FLOAT(f.clone()))),
+            Number::INTEGER(i) => (None, Some(IRValue::INT(i.clone()))),
+            Number::FLOAT(f) => (None, Some(IRValue::FLOAT(f.clone()))),
         }
     }
 
@@ -221,25 +221,20 @@ impl IRParser<'_> {
         s: &mut String,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
-        // todo put it on the stack
-        // self.counter += 1;
-        // (None, Some(InstructionData::STRING(s.to_string())))
-        let local_id = self.locals_counter;
-        self.locals_counter += 1;
-        self.write_instruction_to_block(
-            Instruction::STACK_VAR(
-                local_id.to_string(),
-                Some(InstructionData::STRING(s.to_string())),
-            ),
-            current_block,
-        );
-        (
-            None,
-            Some(InstructionData::REF(Ref {
-                value: local_id.to_string(),
-            })),
-        )
+    ) -> (Option<Instruction>, Option<IRValue>) {
+        // let local_id = self.locals_counter;
+        // self.locals_counter += 1;
+        // self.write_instruction_to_block(
+        //     Instruction::STACK_VAR(local_id.to_string(), Some(IRValue::STRING(s.to_string()))),
+        //     current_block,
+        // );
+        // (
+        //     None,
+        //     Some(IRValue::REF(Ref {
+        //         value: local_id.to_string(),
+        //     })),
+        // )
+        (None, Some(IRValue::STRING(s.to_string())))
     }
 
     fn gen_decl(
@@ -247,7 +242,7 @@ impl IRParser<'_> {
         decl: &mut Decl,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         // first generate the decl value
         let mut instruction_data = None;
         if let Some(value) = decl.value.as_mut() {
@@ -280,7 +275,7 @@ impl IRParser<'_> {
         &mut self,
         block: &mut Block,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         let block_id = self.block_counter;
         self.block_counter += 1;
         let mut new_block_instructions: Box<Vec<Instruction>> = Box::new(vec![]);
@@ -299,7 +294,7 @@ impl IRParser<'_> {
         &mut self,
         left_unary: &mut LeftUnary,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         match left_unary {
             LeftUnary::COMP(expr) => {
                 // todo
@@ -343,7 +338,8 @@ impl IRParser<'_> {
         &mut self,
         call: &mut Call,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
+        // todo a call should just be a string reference to a function
         let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
         let mut first_arg = call.args[0].borrow_mut();
         let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
@@ -362,7 +358,7 @@ impl IRParser<'_> {
         // todo this is really annoying
         (
             None,
-            Some(InstructionData::REF(Ref {
+            Some(IRValue::REF(Ref {
                 value: locals_id.to_string(),
             })),
         )
@@ -372,7 +368,7 @@ impl IRParser<'_> {
         &mut self,
         iff: &mut If,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         let (_, condition_data) = self.gen_ast(&mut iff.condition, current_block);
         if let Some(condition_data_unwrapped) = condition_data {
             // todo uhhh
@@ -413,7 +409,7 @@ impl IRParser<'_> {
         identifier: &mut std::string::String,
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
-    ) -> (Option<Instruction>, Option<InstructionData>) {
+    ) -> (Option<Instruction>, Option<IRValue>) {
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
 
@@ -436,7 +432,7 @@ impl IRParser<'_> {
             //     },
             // )),
             None,
-            Some(InstructionData::REF(Ref {
+            Some(IRValue::REF(Ref {
                 value: format!("{:?}", locals_id),
             })),
         )

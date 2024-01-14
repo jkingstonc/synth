@@ -3,7 +3,7 @@ use std::io::Write;
 use std::time::Instant;
 use std::{fs, process::Command};
 
-use crate::ir::{Instruction, InstructionData};
+use crate::ir::{IRValue, Instruction};
 pub struct X86CodeGenerator {
     pub str_buffer: String,
 }
@@ -90,11 +90,11 @@ impl X86CodeGenerator {
         };
     }
 
-    fn instruction_data_to_asm_string(&self, instruction_data: &InstructionData) -> String {
+    fn instruction_data_to_asm_string(&self, instruction_data: &IRValue) -> String {
         match instruction_data {
-            InstructionData::INT(i) => i.to_string(),
-            InstructionData::FLOAT(f) => f.to_string(),
-            _ => todo!("need to implement InstructionData to string"),
+            IRValue::INT(i) => i.to_string(),
+            IRValue::FLOAT(f) => f.to_string(),
+            _ => todo!("need to implement IRValue to string"),
         }
     }
 
@@ -112,7 +112,7 @@ impl X86CodeGenerator {
         }
     }
 
-    fn generate_stack_var(&mut self, label: &String, instruction_data: &Option<InstructionData>) {
+    fn generate_stack_var(&mut self, label: &String, instruction_data: &Option<IRValue>) {
         if let Some(val) = instruction_data {
             self.str_buffer += &format!("mov eax, {}", self.instruction_data_to_asm_string(val));
         }
