@@ -153,6 +153,7 @@ impl IRInterpreter<'_> {
                                 .expect("expected arg as ref")
                                 .clone()
                         }
+                        InstructionData::INT(_) => arg_data = arg.clone(),
                         _ => panic!("couldn't print instruction data :("),
                     };
 

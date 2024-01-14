@@ -6,5 +6,4 @@ comp printf("compiling to llvm...")
 
 const hi = comp 333 + 444
 
-
-printf(123)
+comp printf(2223)
