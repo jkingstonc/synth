@@ -44,7 +44,6 @@ impl LLVMCodeGenerator {
         // self.generate_instruction(instruction);
 
         unsafe {
-            println!("creating context.");
             let context = llvm_sys::core::LLVMContextCreate();
             let module =
                 llvm_sys::core::LLVMModuleCreateWithName(b"my_module\0".as_ptr() as *const _);
@@ -71,35 +70,9 @@ impl LLVMCodeGenerator {
                 b"entry\0".as_ptr() as *const _,
             );
 
-            // let c_str = CString::new("hi").expect("i am a c string");
-            // let ptr = c_str.as_ptr();
-            // let glob = llvm_sys::core::LLVMAddGlobal(module, llvm_sys::core::LLVMInt32Type(), ptr);
-
-            // llvm_sys::core::LLVMPositionBuilder(builder, bb, function);
             llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
             self.generate_instruction(instruction, builder, bb);
-
-            // let c_str = CString::new("hi").unwrap();
-            // let ddd = c_str.as_ptr();
-            // llvm_sys::core::LLVMBuildAlloca(
-            //     builder,
-            //     llvm_sys::core::LLVMInt64TypeInContext(context),
-            //     b"asdgasdg\0".as_ptr() as *const _,
-            // );
-
-            // let add = llvm_sys::core::LLVMBuildAdd(
-            //     builder,
-            //     LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 44 as u64, 1),
-            //     LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 55 as u64, 1),
-            //     add1,
-            // );
-            // let add2 = llvm_sys::core::LLVMBuildAdd(
-            //     builder,
-            //     add,
-            //     LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 555 as u64, 1),
-            //     c_str,
-            // );
 
             llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
@@ -109,7 +82,6 @@ impl LLVMCodeGenerator {
             let s = llvm_sys::core::LLVMPrintModuleToString(module);
             let contents_str = CStr::from_ptr(s).to_str().unwrap();
             let mut ir_file = File::create("./build/build.ir").expect("unable to create file");
-            debug!("ir_file {:?}", ir_file);
             if let Err(_) = ir_file.write_all(contents_str.as_bytes()) {
                 panic!("failed to write ir");
             }

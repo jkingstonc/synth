@@ -110,7 +110,6 @@ impl IRInterpreter<'_> {
     }
 
     fn execute_call(&mut self, label: &String, callee: &String, arg: &IRValue) -> Option<IRValue> {
-        debug!("ummm {} {:?}", callee.to_string(), self.variables_map);
         let mut callee_data = self
             .variables_map
             .get(callee)

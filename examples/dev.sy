@@ -6,3 +6,7 @@ printf(x)
 
 
 comp printf("im done at compile time!")
+
+
+
+const y = comp 1 + 4
