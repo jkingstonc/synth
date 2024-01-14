@@ -8,6 +8,7 @@ use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMValue};
 use log::{debug, error, info, warn};
 use std::ffi::{CStr, CString};
+use std::fmt::format;
 use std::fs::File;
 use std::io::Write;
 use std::time::Instant;
@@ -16,6 +17,7 @@ use std::{fs, process::Command};
 use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
+    pub anon_string_counter: usize,
     pub str_buffer: String,
     pub sym_table: SymTable<String, LLVMValueRef>,
 }
@@ -285,7 +287,8 @@ impl LLVMCodeGenerator {
                 }
                 IRValue::STRING(s) => {
                     let global_label =
-                        CString::new("str_glob".to_string()).expect("i am a c string");
+                        CString::new(format!("{}_anon_string", self.anon_string_counter))
+                            .expect("i am a c string");
                     let global_label_ptr = global_label.as_ptr();
                     let s_value = CString::new(s.to_string()).expect("i am a c string");
                     let s_value_ptr = s_value.as_ptr();
@@ -303,6 +306,8 @@ impl LLVMCodeGenerator {
                         1,
                         printf_var_ptr,
                     );
+
+                    self.anon_string_counter += 1;
                 }
                 _ => todo!(),
             }
