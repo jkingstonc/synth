@@ -4,6 +4,4 @@ printf("outside")
 
 if x {
     printf("hi")
-}else{
-    printf("bye")
 }

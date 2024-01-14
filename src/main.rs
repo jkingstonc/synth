@@ -168,6 +168,7 @@ fn main() {
         "x86" => {
             let mut code_generator = LLVMCodeGenerator {
                 anon_string_counter: 0,
+                anon_local_block_counter: 0,
                 str_buffer: "".to_string(),
                 sym_table: SymTable::new(),
             };

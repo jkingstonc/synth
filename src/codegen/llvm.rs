@@ -22,6 +22,7 @@ use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
     pub anon_string_counter: usize,
+    pub anon_local_block_counter: usize,
     pub str_buffer: String,
     pub sym_table: SymTable<String, LLVMValueRef>,
 }
@@ -301,15 +302,21 @@ impl LLVMCodeGenerator {
             let val = LLVMConstInt(LLVMInt1Type(), 1 as u64, 1);
             // Create a basic block in the function and set our builder to generate
             // code in it.
-            let then_body_str = CString::new("then_body").unwrap();
+            let then_body_str =
+                CString::new(format!("{}_block", self.anon_local_block_counter)).unwrap();
+            self.anon_local_block_counter += 1;
             let then_body_str_ptr = then_body_str.as_ptr();
             let then_block =
                 LLVMAppendBasicBlockInContext(context, current_function, then_body_str_ptr);
-            let else_body_str = CString::new("else_body").unwrap();
+            // todo dont generate the else at all if we don't have it
+            let else_body_str =
+                CString::new(format!("{}_block", self.anon_local_block_counter)).unwrap();
+            self.anon_local_block_counter += 1;
             let else_body_str_ptr = else_body_str.as_ptr();
             let else_block =
                 LLVMAppendBasicBlockInContext(context, current_function, else_body_str_ptr);
-            let done_str = CString::new("done").unwrap();
+            let done_str = CString::new(format!("{}_done", self.anon_local_block_counter)).unwrap();
+            self.anon_local_block_counter += 1;
             let done_str_ptr = done_str.as_ptr();
             let done_block = LLVMAppendBasicBlockInContext(context, current_function, done_str_ptr);
 
