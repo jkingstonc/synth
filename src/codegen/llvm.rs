@@ -1,8 +1,8 @@
 extern crate llvm_sys;
 use llvm_sys::core::{
-    LLVMArrayType, LLVMArrayType2, LLVMBuildCall2, LLVMBuildGlobalStringPtr, LLVMConstInt,
-    LLVMConstPointerNull, LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder,
-    LLVMVoidType,
+    LLVMArrayType, LLVMArrayType2, LLVMBuildCall2, LLVMBuildGlobalStringPtr, LLVMBuildLoad2,
+    LLVMConstInt, LLVMConstPointerNull, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
+    LLVMPositionBuilder, LLVMVoidType,
 };
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMValue};
@@ -215,8 +215,26 @@ impl LLVMCodeGenerator {
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
-        // unsafe { llvm_sys::core::LLVMBuildLoad2(builder, Ty, PointerVal, Name) }
-        debug!("... doing load label {:?} value {:?}", label, value);
+        unsafe {
+            // unsafe { llvm_sys::core::LLVMBuildLoad2(builder, Ty, PointerVal, Name) }
+            // todo we need to do this
+            debug!("... doing load label {:?} value {:?}", label, value);
+            debug!("....... symtable {:?}", self.sym_table);
+            // LLVMBuildLoad2(builder, Ty, PointerVal, Name)>
+            let label_var = CString::new(label.as_bytes()).expect("i am a c string");
+            let label_var_ptr = label_var.as_ptr();
+            let llvm_ptr_val = self
+                .sym_table
+                .get(value.value.to_string())
+                .expect("expected value");
+            let load_value = LLVMBuildLoad2(
+                builder,
+                LLVMPointerType(LLVMInt8Type(), 0),
+                llvm_ptr_val.clone(),
+                label_var_ptr,
+            );
+            self.sym_table.add(label.to_string(), load_value);
+        }
         None
     }
 
@@ -249,24 +267,35 @@ impl LLVMCodeGenerator {
                         0,
                     );
 
-                    debug!("printf {:?}", func_value);
-
-                    let c_str = CString::new("hello, world!").expect("i am a c string");
-                    let ptr = c_str.as_ptr();
-                    let c_str_var = CString::new("hello_world").expect("i am a c string");
-                    let ptr_var = c_str_var.as_ptr();
-                    let mut string_value = LLVMBuildGlobalStringPtr(builder, ptr, ptr_var);
+                    // let c_str = CString::new("hello, world!").expect("i am a c string");
+                    // let ptr = c_str.as_ptr();
+                    // let c_str_var = CString::new("hello_world").expect("i am a c string");
+                    // let ptr_var = c_str_var.as_ptr();
+                    // let mut string_value = LLVMBuildGlobalStringPtr(builder, ptr, ptr_var);
                     let printf_var = CString::new("printf").expect("i am a c string");
                     let printf_var_ptr = printf_var.as_ptr();
-                    LLVMBuildCall2(
-                        builder,
-                        function_type,
-                        *func_value,
-                        &mut string_value,
-                        // &mut LLVMConstPointerNull(LLVMVoidType()),
-                        1,
-                        printf_var_ptr,
-                    );
+
+                    match arg {
+                        InstructionData::REF(r) => {
+                            debug!("umm {:?}", self.sym_table);
+                            let mut arg0 = self
+                                .sym_table
+                                .get(r.value.to_string())
+                                .expect("expected value")
+                                .clone();
+
+                            LLVMBuildCall2(
+                                builder,
+                                function_type,
+                                *func_value,
+                                &mut arg0,
+                                // &mut LLVMConstPointerNull(LLVMVoidType()),
+                                1,
+                                printf_var_ptr,
+                            );
+                        }
+                        _ => todo!(),
+                    }
                 }
                 _ => panic!(),
             }
@@ -291,14 +320,15 @@ impl LLVMCodeGenerator {
                     InstructionData::REF(r) => {
                         let initializer_value =
                             self.sym_table.get(r.value.to_string()).unwrap().clone();
-                        llvm_sys::core::LLVMBuildStore(
+                        let store_instruction = llvm_sys::core::LLVMBuildStore(
                             builder,
                             initializer_value,
                             alloca_instruction,
                         );
+                        self.sym_table.add(label.to_string(), store_instruction);
                     }
                     InstructionData::INT(i) => {
-                        llvm_sys::core::LLVMBuildStore(
+                        let store_instruction = llvm_sys::core::LLVMBuildStore(
                             builder,
                             LLVMConstInt(
                                 llvm_sys::core::LLVMInt32Type(),
@@ -307,6 +337,16 @@ impl LLVMCodeGenerator {
                             ),
                             alloca_instruction,
                         );
+                        self.sym_table.add(label.to_string(), store_instruction);
+                    }
+                    InstructionData::STRING(s) => {
+                        let c_str = CString::new(s.to_string()).expect("i am a c string");
+                        let ptr = c_str.as_ptr();
+                        let c_str_label = CString::new(label.to_string()).expect("i am a c string");
+                        let ptr_label = c_str_label.as_ptr();
+                        let mut llvm_string_value =
+                            LLVMBuildGlobalStringPtr(builder, ptr, ptr_label);
+                        self.sym_table.add(label.to_string(), llvm_string_value);
                     }
                     _ => todo!(),
                 }

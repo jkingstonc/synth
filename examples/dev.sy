@@ -2,8 +2,7 @@
 
 
 
-comp printf("compiling to llvm...")
+const x = "hello, synth!"
 
-const hi = comp 333 + 444
 
-comp printf(2223)
+printf(x)
