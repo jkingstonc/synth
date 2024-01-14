@@ -1,12 +1,9 @@
 
-const x = "hello, world!"
-
-printf(x)
+printf("outside")
 
 
-
-comp printf("im done at compile time!")
-
-
-
-const y = comp 1 + 4
+if x {
+    printf("hi")
+}else{
+    printf("bye")
+}
