@@ -1,7 +1,10 @@
 
 printf("outside")
 
-
 if x {
     printf("hi")
+}
+
+if x {
+    printf("again")
 }
