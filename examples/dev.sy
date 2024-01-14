@@ -2,3 +2,5 @@
 
 
 printf("i am being called from synth!!!!")
+
+const x = "i am x string"

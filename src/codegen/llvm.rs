@@ -363,7 +363,9 @@ impl LLVMCodeGenerator {
                         let c_str = CString::new(s.to_string()).expect("i am a c string");
                         let ptr = c_str.as_ptr();
                         let c_str_label =
-                            CString::new(label.to_string() + "_global").expect("i am a c string");
+                            CString::new(format!("{}_anon_string", self.anon_string_counter))
+                                .expect("i am a c string");
+                        self.anon_string_counter += 1;
                         let ptr_label = c_str_label.as_ptr();
                         let mut llvm_string_value = LLVMBuildGlobalString(builder, ptr, ptr_label);
                         // we need to load it locally
