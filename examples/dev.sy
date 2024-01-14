@@ -2,3 +2,7 @@
 const x = "hello, world!"
 
 printf(x)
+
+
+
+comp printf("im done at compile time!")

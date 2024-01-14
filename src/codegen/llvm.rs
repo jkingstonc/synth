@@ -247,11 +247,6 @@ impl LLVMCodeGenerator {
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            // let func_value = self
-            //     .sym_table
-            //     .get(r.value.to_string())
-            //     .expect("expected function value");
-
             let func_value = self
                 .sym_table
                 .get(callee.to_owned())
@@ -259,7 +254,6 @@ impl LLVMCodeGenerator {
 
             let function_type = llvm_sys::core::LLVMFunctionType(
                 LLVMInt32Type(),
-                // std::ptr::null_mut(),
                 &mut LLVMPointerType(LLVMInt8Type(), 0),
                 1,
                 0,
@@ -361,6 +355,7 @@ impl LLVMCodeGenerator {
                         self.sym_table.add(label.to_string(), store_instruction);
                     }
                     IRValue::STRING(s) => {
+                        // first allocate space for the global string
                         let c_str = CString::new(s.to_string()).expect("i am a c string");
                         let ptr = c_str.as_ptr();
                         let c_str_label =
@@ -370,17 +365,16 @@ impl LLVMCodeGenerator {
                         let ptr_label = c_str_label.as_ptr();
                         let mut llvm_string_value = LLVMBuildGlobalString(builder, ptr, ptr_label);
 
+                        // then we need to load the string
                         let label_str = CString::new(label.to_string()).unwrap();
                         let label_str_ptr = label_str.as_ptr();
-
-                        // allocate space for a pointer (todo correct naming)
+                        // allocate space for a pointer
                         let tmp_name = CString::new(format!("{}.0", label)).unwrap();
                         let tmp_ptr = tmp_name.as_ptr();
                         let alloca_instruction =
                             LLVMBuildAlloca(builder, LLVMPointerType(LLVMInt8Type(), 0), tmp_ptr);
                         // then store the pointer to the str in that pointer
-                        let store_instruction =
-                            LLVMBuildStore(builder, llvm_string_value, alloca_instruction);
+                        LLVMBuildStore(builder, llvm_string_value, alloca_instruction);
                         // then actually load the pointer value onto the stack
                         let mut load = LLVMBuildLoad2(
                             builder,
