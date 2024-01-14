@@ -1,8 +1,4 @@
 
 
 
-comp printf("hi")
-
-const x = "hello, synth!"
-
-printf(x)
+printf("i am being called from synth!!!!")

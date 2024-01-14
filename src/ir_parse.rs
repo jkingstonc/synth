@@ -411,12 +411,6 @@ impl IRParser<'_> {
         );
         self.counter += 1;
         (
-            // Some(Instruction::LOAD(
-            //     format!("{:?}", locals_id),
-            //     Ref {
-            //         value: identifier.to_string(),
-            //     },
-            // )),
             None,
             Some(IRValue::REF(Ref {
                 value: format!("{:?}", locals_id),

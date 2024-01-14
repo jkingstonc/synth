@@ -1,8 +1,8 @@
 extern crate llvm_sys;
 use llvm_sys::core::{
-    LLVMArrayType, LLVMArrayType2, LLVMBuildCall2, LLVMBuildGlobalStringPtr, LLVMBuildLoad2,
-    LLVMConstInt, LLVMConstPointerNull, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
-    LLVMPositionBuilder, LLVMVoidType,
+    LLVMArrayType, LLVMArrayType2, LLVMBuildCall2, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr,
+    LLVMBuildLoad2, LLVMConstInt, LLVMConstPointerNull, LLVMInt32Type, LLVMInt8Type,
+    LLVMPointerType, LLVMPositionBuilder, LLVMVoidType,
 };
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMValue};
@@ -216,10 +216,6 @@ impl LLVMCodeGenerator {
         current_block: *mut LLVMBasicBlock,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            // unsafe { llvm_sys::core::LLVMBuildLoad2(builder, Ty, PointerVal, Name) }
-            // todo we need to do this
-            debug!("... doing load label {:?} value {:?}", label, value);
-            debug!("....... symtable {:?}", self.sym_table);
             // LLVMBuildLoad2(builder, Ty, PointerVal, Name)>
             let label_var = CString::new(label.as_bytes()).expect("i am a c string");
             let label_var_ptr = label_var.as_ptr();
@@ -270,18 +266,39 @@ impl LLVMCodeGenerator {
 
             match arg {
                 IRValue::REF(r) => {
-                    debug!("umm {:?}", self.sym_table);
                     let mut arg0 = self
                         .sym_table
                         .get(r.value.to_string())
                         .expect("expected value")
                         .clone();
+                    // let mut arg0 = self.sym_table.get("x".to_string()).unwrap().clone();
 
                     LLVMBuildCall2(
                         builder,
                         function_type,
                         *func_value,
                         &mut arg0,
+                        // &mut LLVMConstPointerNull(LLVMVoidType()),
+                        1,
+                        printf_var_ptr,
+                    );
+                }
+                IRValue::STRING(s) => {
+                    let global_label =
+                        CString::new("str_glob".to_string()).expect("i am a c string");
+                    let global_label_ptr = global_label.as_ptr();
+                    let s_value = CString::new(s.to_string()).expect("i am a c string");
+                    let s_value_ptr = s_value.as_ptr();
+                    let mut string_value =
+                        LLVMBuildGlobalString(builder, s_value_ptr, global_label_ptr);
+
+                    // let mut arg0 = self.sym_table.get("x".to_string()).unwrap().clone();
+
+                    LLVMBuildCall2(
+                        builder,
+                        function_type,
+                        *func_value,
+                        &mut string_value,
                         // &mut LLVMConstPointerNull(LLVMVoidType()),
                         1,
                         printf_var_ptr,
@@ -343,8 +360,7 @@ impl LLVMCodeGenerator {
                         let c_str_label =
                             CString::new(label.to_string() + "_global").expect("i am a c string");
                         let ptr_label = c_str_label.as_ptr();
-                        let mut llvm_string_value =
-                            LLVMBuildGlobalStringPtr(builder, ptr, ptr_label);
+                        let mut llvm_string_value = LLVMBuildGlobalString(builder, ptr, ptr_label);
                         // we need to load it locally
                         let c_str_label = CString::new(label.to_string()).expect("i am a c string");
                         let ptr_label = c_str_label.as_ptr();
@@ -354,7 +370,8 @@ impl LLVMCodeGenerator {
                             llvm_string_value,
                             ptr_label,
                         );
-                        self.sym_table.add(label.to_string(), llvm_string_load);
+                        // todo for now we are not loading the string & just returning it
+                        self.sym_table.add(label.to_string(), llvm_string_value);
                     }
                     _ => todo!(),
                 }
