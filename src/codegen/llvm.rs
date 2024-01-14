@@ -1,6 +1,9 @@
 extern crate llvm_sys;
-use llvm_sys::core::{LLVMConstInt, LLVMPositionBuilder};
-use llvm_sys::prelude::LLVMValueRef;
+use llvm_sys::core::{
+    LLVMBuildCall2, LLVMBuildGlobalStringPtr, LLVMConstInt, LLVMConstPointerNull, LLVMInt32Type,
+    LLVMPositionBuilder, LLVMVoidType,
+};
+use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMValue};
 use log::{debug, error, info, warn};
 use std::ffi::{CStr, CString};
@@ -9,7 +12,7 @@ use std::io::Write;
 use std::time::Instant;
 use std::{fs, process::Command};
 
-use crate::ir::{Instruction, InstructionData};
+use crate::ir::{Instruction, InstructionData, Ref};
 use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
     pub str_buffer: String,
@@ -41,6 +44,8 @@ impl LLVMCodeGenerator {
             let module =
                 llvm_sys::core::LLVMModuleCreateWithName(b"my_module\0".as_ptr() as *const _);
             let builder = llvm_sys::core::LLVMCreateBuilderInContext(context);
+
+            self.generate_builtins(module, builder);
 
             // Get the type signature for void nop(void);
             // Then create it in our module.
@@ -133,6 +138,24 @@ impl LLVMCodeGenerator {
         );
     }
 
+    fn generate_builtins(
+        &mut self,
+        module: LLVMModuleRef,
+        builder: *mut LLVMBuilder,
+        // current_block: *mut LLVMBasicBlock,
+    ) {
+        unsafe {
+            let function_type =
+                llvm_sys::core::LLVMFunctionType(LLVMInt32Type(), std::ptr::null_mut(), 0, 0);
+            let function = llvm_sys::core::LLVMAddFunction(
+                module,
+                b"printf\0".as_ptr() as *const _,
+                function_type,
+            );
+            self.sym_table.add("printf".to_string(), function);
+        }
+    }
+
     fn generate_instruction(
         &mut self,
         instruction: &Instruction,
@@ -149,11 +172,17 @@ impl LLVMCodeGenerator {
             Instruction::STACK_VAR(location, value) => {
                 self.generate_stack_var(location, value, builder, current_block)
             }
+            Instruction::LOAD(location, value) => {
+                self.generate_load(location, value, builder, current_block)
+            }
+            Instruction::CALL(location, callee, arg) => {
+                self.generate_call(location, callee, arg, builder, current_block)
+            }
             // Instruction::BLOCK(label, block) => self.generate_block(label, block),
             // Instruction::STACK_VAR(label, instruction_data) => {
             //     self.generate_stack_var(label, instruction_data)
             // }
-            _ => panic!("unsupported instruction"),
+            _ => panic!("unsupported instruction {:?}", instruction),
         }
     }
 
@@ -169,6 +198,70 @@ impl LLVMCodeGenerator {
     ) -> Option<*mut LLVMValue> {
         for instruction in instructions.iter() {
             self.generate_instruction(instruction, builder, current_block);
+        }
+        None
+    }
+
+    fn generate_load(
+        &mut self,
+        label: &String,
+        value: &Ref,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+    ) -> Option<*mut LLVMValue> {
+        // unsafe { llvm_sys::core::LLVMBuildLoad2(builder, Ty, PointerVal, Name) }
+        debug!("... doing load label {:?} value {:?}", label, value);
+        None
+    }
+
+    fn generate_call(
+        &mut self,
+        label: &String,
+        callee: &InstructionData,
+        arg: &InstructionData,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+    ) -> Option<*mut LLVMValue> {
+        unsafe {
+            match callee {
+                InstructionData::REF(r) => {
+                    // let func_value = self
+                    //     .sym_table
+                    //     .get(r.value.to_string())
+                    //     .expect("expected function value");
+
+                    let func_value = self
+                        .sym_table
+                        .get("printf".to_owned())
+                        .expect("expected printf");
+                    let function_type = llvm_sys::core::LLVMFunctionType(
+                        LLVMInt32Type(),
+                        std::ptr::null_mut(),
+                        0,
+                        0,
+                    );
+
+                    debug!("printf {:?}", func_value);
+
+                    let c_str = CString::new("hello, world!").expect("i am a c string");
+                    let ptr = c_str.as_ptr();
+                    let c_str_var = CString::new("hello_world").expect("i am a c string");
+                    let ptr_var = c_str_var.as_ptr();
+                    let mut string_value = LLVMBuildGlobalStringPtr(builder, ptr, ptr_var);
+                    let printf_var = CString::new("printf").expect("i am a c string");
+                    let printf_var_ptr = printf_var.as_ptr();
+                    LLVMBuildCall2(
+                        builder,
+                        function_type,
+                        *func_value,
+                        // &mut string_value,
+                        &mut LLVMConstPointerNull(LLVMVoidType()),
+                        0,
+                        printf_var_ptr,
+                    );
+                }
+                _ => panic!(),
+            }
         }
         None
     }
