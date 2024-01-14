@@ -270,26 +270,17 @@ impl LLVMCodeGenerator {
 
             match arg {
                 IRValue::REF(r) => {
-                    // the issue is we are not actually loading the x variable, we are just skipping it entirely and loading the value it points to :(
-                    // todo lets try a load...
-                    debug!("doing call, rhs ref = {:?}", r);
                     let mut arg0 = self
                         .sym_table
                         .get(r.value.to_string())
                         .expect("expected value")
                         .clone();
-                    // let mut arg0 = self.sym_table.get("x".to_string()).unwrap().clone();
-
-                    let tmp = CString::new("tmp").unwrap();
-                    let tmp_ptr = tmp.as_ptr();
-                    let mut load =
-                        LLVMBuildLoad2(builder, LLVMPointerType(LLVMInt8Type(), 0), arg0, tmp_ptr);
 
                     LLVMBuildCall2(
                         builder,
                         function_type,
                         *func_value,
-                        &mut load,
+                        &mut arg0,
                         // &mut LLVMConstPointerNull(LLVMVoidType()),
                         1,
                         printf_var_ptr,
@@ -378,51 +369,27 @@ impl LLVMCodeGenerator {
                         self.anon_string_counter += 1;
                         let ptr_label = c_str_label.as_ptr();
                         let mut llvm_string_value = LLVMBuildGlobalString(builder, ptr, ptr_label);
-                        // we need to load it locally
-                        // let c_str_label = CString::new(label.to_string()).expect("i am a c string");
-                        // let ptr_label = c_str_label.as_ptr();
-                        // let mut llvm_string_load = LLVMBuildLoad2(
-                        //     builder,
-                        //     LLVMPointerType(LLVMInt8Type(), 0),
-                        //     llvm_string_value,
-                        //     ptr_label,
-                        // );
-
-                        // todo we need to store the variable not the raw string!
-                        // self.sym_table.add(label.to_string(), llvm_string_value);
-
-                        // todo here we need to allocate space for the variable
 
                         let label_str = CString::new(label.to_string()).unwrap();
                         let label_str_ptr = label_str.as_ptr();
-                        // let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
-                        //     builder,
-                        //     llvm_sys::core::LLVMPointerType(LLVMInt8Type(), 0),
-                        //     label_str_ptr,
-                        // );
-                        // llvm_sys::core::LLVMBuildStore(
-                        //     builder,
-                        //     llvm_string_value,
-                        //     alloca_instruction,
-                        // );
-                        // let alloca_instruction = LLVMBuildLoad2(
-                        //     builder,
-                        //     LLVMPointerType(LLVMInt8Type(), 0),
-                        //     llvm_string_value,
-                        //     label_str_ptr,
-                        // );
 
-                        // allocate space for a pointer
-                        let alloca_instruction = LLVMBuildAlloca(
-                            builder,
-                            LLVMPointerType(LLVMInt8Type(), 0),
-                            label_str_ptr,
-                        );
+                        // allocate space for a pointer (todo correct naming)
+                        let tmp_name = CString::new(format!("{}.0", label)).unwrap();
+                        let tmp_ptr = tmp_name.as_ptr();
+                        let alloca_instruction =
+                            LLVMBuildAlloca(builder, LLVMPointerType(LLVMInt8Type(), 0), tmp_ptr);
                         // then store the pointer to the str in that pointer
                         let store_instruction =
                             LLVMBuildStore(builder, llvm_string_value, alloca_instruction);
+                        // then actually load the pointer value onto the stack
+                        let mut load = LLVMBuildLoad2(
+                            builder,
+                            LLVMPointerType(LLVMInt8Type(), 0),
+                            alloca_instruction,
+                            label_str_ptr,
+                        );
 
-                        self.sym_table.add(label.to_string(), alloca_instruction);
+                        self.sym_table.add(label.to_string(), load);
                     }
                     _ => todo!(),
                 }
