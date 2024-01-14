@@ -1,7 +1,8 @@
 extern crate llvm_sys;
 use llvm_sys::core::{
-    LLVMBuildCall2, LLVMBuildGlobalStringPtr, LLVMConstInt, LLVMConstPointerNull, LLVMInt32Type,
-    LLVMPositionBuilder, LLVMVoidType,
+    LLVMArrayType, LLVMArrayType2, LLVMBuildCall2, LLVMBuildGlobalStringPtr, LLVMConstInt,
+    LLVMConstPointerNull, LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder,
+    LLVMVoidType,
 };
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
 use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMValue};
@@ -145,8 +146,13 @@ impl LLVMCodeGenerator {
         // current_block: *mut LLVMBasicBlock,
     ) {
         unsafe {
-            let function_type =
-                llvm_sys::core::LLVMFunctionType(LLVMInt32Type(), std::ptr::null_mut(), 0, 0);
+            let function_type = llvm_sys::core::LLVMFunctionType(
+                LLVMInt32Type(),
+                // std::ptr::null_mut(),
+                &mut LLVMPointerType(LLVMInt8Type(), 0),
+                1,
+                0,
+            );
             let function = llvm_sys::core::LLVMAddFunction(
                 module,
                 b"printf\0".as_ptr() as *const _,
@@ -234,10 +240,12 @@ impl LLVMCodeGenerator {
                         .sym_table
                         .get("printf".to_owned())
                         .expect("expected printf");
+
                     let function_type = llvm_sys::core::LLVMFunctionType(
                         LLVMInt32Type(),
-                        std::ptr::null_mut(),
-                        0,
+                        // std::ptr::null_mut(),
+                        &mut LLVMPointerType(LLVMInt8Type(), 0),
+                        1,
                         0,
                     );
 
@@ -254,9 +262,9 @@ impl LLVMCodeGenerator {
                         builder,
                         function_type,
                         *func_value,
-                        // &mut string_value,
-                        &mut LLVMConstPointerNull(LLVMVoidType()),
-                        0,
+                        &mut string_value,
+                        // &mut LLVMConstPointerNull(LLVMVoidType()),
+                        1,
                         printf_var_ptr,
                     );
                 }
