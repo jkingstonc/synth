@@ -399,21 +399,39 @@ impl IRParser<'_> {
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
 
+        // // todo do we need to do a load here?
+        // self.write_instruction_to_block(
+        //     Instruction::LOAD(
+        //         format!("{:?}", locals_id),
+        //         Ref {
+        //             value: identifier.to_string(),
+        //         },
+        //     ),
+        //     current_block,
+        // );
+        // self.counter += 1;
+        // (
+        //     None,
+        //     Some(IRValue::REF(Ref {
+        //         value: format!("{:?}", locals_id),
+        //     })),
+        // )
+        //todo we are instead returning a ref!
         // todo do we need to do a load here?
-        self.write_instruction_to_block(
-            Instruction::LOAD(
-                format!("{:?}", locals_id),
-                Ref {
-                    value: identifier.to_string(),
-                },
-            ),
-            current_block,
-        );
+        // self.write_instruction_to_block(
+        //     Instruction::LOAD(
+        //         format!("{:?}", locals_id),
+        //         Ref {
+        //             value: identifier.to_string(),
+        //         },
+        //     ),
+        //     current_block,
+        // );
         self.counter += 1;
         (
             None,
             Some(IRValue::REF(Ref {
-                value: format!("{:?}", locals_id),
+                value: identifier.to_string(),
             })),
         )
     }
