@@ -1,5 +1,16 @@
 
 
 
-var x = comp 444 + 7797
-x = 123
+const x = 10
+
+if x {
+    printf("in x")
+
+
+    var y = 44
+
+    if y {
+
+        printf("in y!")
+    }
+}

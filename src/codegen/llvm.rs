@@ -1,11 +1,12 @@
 extern crate llvm_sys;
 use llvm_sys::core::{
     LLVMAppendBasicBlock, LLVMAppendBasicBlockInContext, LLVMArrayType, LLVMArrayType2,
-    LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBr, LLVMBuildCall2, LLVMBuildCondBr,
-    LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildIntCast, LLVMBuildLoad2,
-    LLVMBuildStore, LLVMConstInt, LLVMConstPointerNull, LLVMCreateBasicBlockInContext,
-    LLVMGetNamedGlobal, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
-    LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMVoidType,
+    LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall2,
+    LLVMBuildCast, LLVMBuildCondBr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildICmp,
+    LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2, LLVMBuildStore, LLVMConstInt,
+    LLVMConstPointerNull, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal, LLVMInt1Type,
+    LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder, LLVMPositionBuilderAtEnd,
+    LLVMVoidType,
 };
 use llvm_sys::execution_engine::LLVMGetGlobalValueAddress;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
@@ -306,10 +307,7 @@ impl LLVMCodeGenerator {
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
     ) -> Option<*mut LLVMValue> {
-        // todo get the value
         unsafe {
-            // let val = LLVMConstInt(LLVMInt1Type(), 1 as u64, 1);
-
             let int_cast_c_str = CString::new(format!("{}", self.anon_local_counter)).unwrap();
             self.anon_local_counter += 1;
             let int_cast_c_str_ptr = int_cast_c_str.as_ptr();
@@ -331,8 +329,13 @@ impl LLVMCodeGenerator {
                     let load_c_str_ptr = load_c_str.as_ptr();
                     let load_instr =
                         LLVMBuildLoad2(builder, LLVMInt32Type(), int_val.clone(), load_c_str_ptr);
-                    cond_value =
-                        LLVMBuildIntCast(builder, load_instr, LLVMInt1Type(), int_cast_c_str_ptr);
+                    cond_value = LLVMBuildICmp(
+                        builder,
+                        llvm_sys::LLVMIntPredicate::LLVMIntNE,
+                        load_instr,
+                        LLVMConstInt(LLVMInt32Type(), 0 as u64, 1),
+                        int_cast_c_str_ptr,
+                    );
                 }
                 _ => todo!(),
             }
