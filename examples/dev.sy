@@ -1,11 +1,11 @@
 
 
-const x = 3
-const y = x + 34
+const x = 2
 
-
-if y {
-    printf("sort of working\n")
-    printf("sort of working\n")
+if x + 3 {
     printf("sort of working\n")
 }
+
+
+
+

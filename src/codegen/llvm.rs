@@ -21,12 +21,18 @@ use std::{fs, process::Command};
 
 use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
+
+pub struct LLVMValueBundle {
+    pub llvm_value: LLVMValueRef,
+    pub is_ref: bool,
+}
+
 pub struct LLVMCodeGenerator {
     pub anon_local_counter: usize,
     pub anon_string_counter: usize,
     pub anon_local_block_counter: usize,
     pub str_buffer: String,
-    pub sym_table: SymTable<String, LLVMValueRef>,
+    pub sym_table: SymTable<String, LLVMValueBundle>,
 }
 
 /*
@@ -139,7 +145,13 @@ impl LLVMCodeGenerator {
                 b"printf\0".as_ptr() as *const _,
                 function_type,
             );
-            self.sym_table.add("printf".to_string(), function);
+            self.sym_table.add(
+                "printf".to_string(),
+                LLVMValueBundle {
+                    llvm_value: function,
+                    is_ref: false,
+                },
+            );
         }
     }
 
@@ -243,23 +255,28 @@ impl LLVMCodeGenerator {
                 IRValue::INT(i) => LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
                 IRValue::FLOAT(_) => todo!(),
                 IRValue::REF(r) => {
-                    let ptr = self
+                    let value_bundle = self
                         .sym_table
                         .get(r.value.to_owned())
                         .expect("expected value");
-                    debug!(
-                        "ir_value_to_llvm_value = ir_value {:?} ptr_value {:?}",
-                        ir_value, ptr
-                    );
                     // let c_str = CString::new(format!("{}_local", self.anon_local_counter)).unwrap();
                     let c_string =
                         self.string_to_c_str(&format!("{}_local", self.anon_local_counter));
                     self.anon_local_counter += 1;
-                    // let c_str_ptr = c_str.into_raw();
-                    // memory leaks here
-                    let tmp = LLVMBuildLoad2(builder, LLVMInt32Type(), ptr.clone(), c_string);
-                    // drop(CString::from_raw(c_string));
-                    tmp
+                    debug!("looking up ref! {:?}", r);
+                    if value_bundle.is_ref {
+                        // todo this is not always right. we don't want to load if its not an alloca instruction.
+                        // say its just an add instruction in the symbol table, we want to return that.
+                        // we need to store some information along with it.
+                        return LLVMBuildLoad2(
+                            builder,
+                            LLVMInt32Type(),
+                            value_bundle.llvm_value.clone(),
+                            c_string,
+                        );
+                    }
+
+                    value_bundle.llvm_value
                 }
                 IRValue::STRING(_) => todo!(),
                 IRValue::INTRINSIC(_) => todo!(),
@@ -324,13 +341,22 @@ impl LLVMCodeGenerator {
                 .sym_table
                 .get(value.value.to_string())
                 .expect("expected value");
-            let load_value = LLVMBuildLoad2(
-                builder,
-                LLVMPointerType(LLVMInt8Type(), 0),
-                llvm_ptr_val.clone(),
-                label_var_ptr,
-            );
-            self.sym_table.add(label.to_string(), load_value);
+            if llvm_ptr_val.is_ref {
+                let load_value = LLVMBuildLoad2(
+                    builder,
+                    LLVMPointerType(LLVMInt8Type(), 0),
+                    llvm_ptr_val.llvm_value.clone(),
+                    label_var_ptr,
+                );
+                self.sym_table.add(
+                    label.to_string(),
+                    LLVMValueBundle {
+                        llvm_value: load_value,
+                        is_ref: false, // todo this may be wrong! check the llvm_ptr_val
+                    },
+                );
+            }
+            panic!("must be ref to do a load!");
         }
         None
     }
@@ -350,6 +376,7 @@ impl LLVMCodeGenerator {
             self.anon_local_counter += 1;
             let int_cast_c_str_ptr = int_cast_c_str.as_ptr();
             let mut cond_value: *mut LLVMValue;
+
             match condition {
                 IRValue::INT(i) => {
                     cond_value = LLVMBuildIntCast(
@@ -365,15 +392,29 @@ impl LLVMCodeGenerator {
                         CString::new(format!("{}", self.anon_local_counter)).unwrap();
                     self.anon_local_counter += 1;
                     let load_c_str_ptr = load_c_str.as_ptr();
-                    let load_instr =
-                        LLVMBuildLoad2(builder, LLVMInt32Type(), int_val.clone(), load_c_str_ptr);
-                    cond_value = LLVMBuildICmp(
-                        builder,
-                        llvm_sys::LLVMIntPredicate::LLVMIntNE,
-                        load_instr,
-                        LLVMConstInt(LLVMInt32Type(), 0 as u64, 1),
-                        int_cast_c_str_ptr,
-                    );
+                    if int_val.is_ref {
+                        let load_instr = LLVMBuildLoad2(
+                            builder,
+                            LLVMInt32Type(),
+                            int_val.llvm_value.clone(),
+                            load_c_str_ptr,
+                        );
+                        cond_value = LLVMBuildICmp(
+                            builder,
+                            llvm_sys::LLVMIntPredicate::LLVMIntNE,
+                            load_instr,
+                            LLVMConstInt(LLVMInt32Type(), 0 as u64, 1),
+                            int_cast_c_str_ptr,
+                        );
+                    } else {
+                        cond_value = LLVMBuildICmp(
+                            builder,
+                            llvm_sys::LLVMIntPredicate::LLVMIntNE,
+                            int_val.llvm_value,
+                            LLVMConstInt(LLVMInt32Type(), 0 as u64, 1),
+                            int_cast_c_str_ptr,
+                        );
+                    }
                 }
                 _ => todo!(),
             }
@@ -440,7 +481,7 @@ impl LLVMCodeGenerator {
                     LLVMBuildStore(
                         builder,
                         LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
-                        storee_ptr.clone(),
+                        storee_ptr.llvm_value.clone(),
                     );
                 }
                 _ => todo!(),
@@ -462,7 +503,8 @@ impl LLVMCodeGenerator {
             let func_value = self
                 .sym_table
                 .get(callee.to_owned())
-                .expect("expected printf");
+                .expect("expected printf")
+                .llvm_value;
 
             let function_type = llvm_sys::core::LLVMFunctionType(
                 LLVMInt32Type(),
@@ -480,12 +522,13 @@ impl LLVMCodeGenerator {
                         .sym_table
                         .get(r.value.to_string())
                         .expect("expected value")
+                        .llvm_value
                         .clone();
 
                     LLVMBuildCall2(
                         builder,
                         function_type,
-                        *func_value,
+                        func_value,
                         &mut arg0,
                         // &mut LLVMConstPointerNull(LLVMVoidType()),
                         1,
@@ -507,7 +550,7 @@ impl LLVMCodeGenerator {
                     LLVMBuildCall2(
                         builder,
                         function_type,
-                        *func_value,
+                        func_value,
                         &mut string_value,
                         // &mut LLVMConstPointerNull(LLVMVoidType()),
                         1,
@@ -542,14 +585,24 @@ impl LLVMCodeGenerator {
                             llvm_sys::core::LLVMInt32Type(),
                             ptr,
                         );
-                        let initializer_value =
-                            self.sym_table.get(r.value.to_string()).unwrap().clone();
+                        let initializer_value = self
+                            .sym_table
+                            .get(r.value.to_string())
+                            .unwrap()
+                            .llvm_value
+                            .clone();
                         let store_instruction = llvm_sys::core::LLVMBuildStore(
                             builder,
                             initializer_value,
                             alloca_instruction,
                         );
-                        self.sym_table.add(label.to_string(), alloca_instruction);
+                        self.sym_table.add(
+                            label.to_string(),
+                            LLVMValueBundle {
+                                llvm_value: alloca_instruction,
+                                is_ref: true,
+                            },
+                        );
                     }
                     IRValue::INT(i) => {
                         let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
@@ -566,13 +619,13 @@ impl LLVMCodeGenerator {
                             ),
                             alloca_instruction,
                         );
-                        // todo this may be causing issues here? do we want to directly put the instruction?
-                        debug!(
-                            "putting {:?} into sym table {:?}",
+                        self.sym_table.add(
                             label.to_string(),
-                            alloca_instruction
+                            LLVMValueBundle {
+                                llvm_value: alloca_instruction,
+                                is_ref: true,
+                            },
                         );
-                        self.sym_table.add(label.to_string(), alloca_instruction);
                     }
                     IRValue::STRING(s) => {
                         // first allocate space for the global string
@@ -603,7 +656,13 @@ impl LLVMCodeGenerator {
                             label_str_ptr,
                         );
 
-                        self.sym_table.add(label.to_string(), load);
+                        self.sym_table.add(
+                            label.to_string(),
+                            LLVMValueBundle {
+                                llvm_value: load,
+                                is_ref: false,
+                            },
+                        );
                     }
                     _ => todo!(),
                 }
@@ -623,21 +682,6 @@ impl LLVMCodeGenerator {
         current_function: *mut LLVMValue,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            // let mut left: LLVMValueRef;
-            // let mut right: LLVMValueRef;
-            // match first {
-            //     IRValue::INT(i) => {
-            //         left = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
-            //     }
-            //     _ => todo!("not implemented"),
-            // }
-            // match second {
-            //     IRValue::INT(i) => {
-            //         right = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
-            //     }
-            //     _ => todo!("not implemented"),
-            // }
-
             let left = self.ir_value_to_llvm_value(first, builder);
             let right = self.ir_value_to_llvm_value(second, builder);
 
@@ -648,10 +692,14 @@ impl LLVMCodeGenerator {
                 location.to_owned().as_bytes().as_ptr() as *const i8,
             );
 
-            self.sym_table.add(location.to_string(), add_instr);
+            self.sym_table.add(
+                location.to_string(),
+                LLVMValueBundle {
+                    llvm_value: add_instr,
+                    is_ref: false,
+                },
+            );
 
-            // llvm_sys::core::LLVMPositionBuilderAtEnd(builder, current_block);
-            // llvm_sys::core::LLVMBuildRet(builder, add_instr);
             None
         }
     }
