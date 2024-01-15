@@ -36,6 +36,8 @@ pub enum Instruction {
     SUB(String, IRValue, IRValue),
     // load instruction (todo this should depend on the type?)
     LOAD(String, Ref),
+    // store a value in a ref value
+    STORE(Ref, IRValue),
     // var instruction
     // this will allocate a variable some memory on the stack
     // for now it can not be initialised. this is fine as we know this will be on the stack
@@ -67,6 +69,9 @@ impl Instruction {
             }
             Instruction::LOAD(location, instruction_data) => {
                 format!("{:<15} = {:<10} {:?}", location, "load", instruction_data)
+            }
+            Instruction::STORE(the_storee, value) => {
+                format!("         {:<10} {:?} {:?}", "store", the_storee, value)
             }
             Instruction::STACK_VAR(location, instruction_data) => format!(
                 "{:<15} = {:<10} {:?}",

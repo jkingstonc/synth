@@ -198,6 +198,14 @@ impl LLVMCodeGenerator {
                 current_block,
                 current_function,
             ),
+            Instruction::STORE(storee, value) => self.generate_store(
+                storee,
+                value,
+                context,
+                builder,
+                current_block,
+                current_function,
+            ),
             // Instruction::BLOCK(label, block) => self.generate_block(label, block),
             // Instruction::STACK_VAR(label, instruction_data) => {
             //     self.generate_stack_var(label, instruction_data)
@@ -345,6 +353,31 @@ impl LLVMCodeGenerator {
         None
     }
 
+    fn generate_store(
+        &mut self,
+        storee: &Ref,
+        value: &IRValue,
+        context: *mut LLVMContext,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+        current_function: *mut LLVMValue,
+    ) -> Option<*mut LLVMValue> {
+        unsafe {
+            let storee_ptr = self.sym_table.get(storee.value.to_string()).unwrap();
+            // todo make a generic way to get an llvm value from an IRValue
+            match value {
+                IRValue::INT(i) => {
+                    LLVMBuildStore(
+                        builder,
+                        LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
+                        storee_ptr.clone(),
+                    );
+                }
+                _ => todo!(),
+            }
+        }
+        None
+    }
     fn generate_call(
         &mut self,
         label: &String,
@@ -446,7 +479,7 @@ impl LLVMCodeGenerator {
                             initializer_value,
                             alloca_instruction,
                         );
-                        self.sym_table.add(label.to_string(), store_instruction);
+                        self.sym_table.add(label.to_string(), alloca_instruction);
                     }
                     IRValue::INT(i) => {
                         let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
@@ -463,7 +496,7 @@ impl LLVMCodeGenerator {
                             ),
                             alloca_instruction,
                         );
-                        self.sym_table.add(label.to_string(), store_instruction);
+                        self.sym_table.add(label.to_string(), alloca_instruction);
                     }
                     IRValue::STRING(s) => {
                         // first allocate space for the global string

@@ -102,6 +102,33 @@ impl Parser<'_> {
                     value: Some(Box::new(value)),
                 });
             }
+            Token::VAR => {
+                self.consume(current);
+                let identifier: String;
+                match self.consume(current) {
+                    Token::IDENTIFIER(i) => identifier = i.to_string(),
+                    _ => panic!(),
+                }
+                self.consume(current); // consume the =
+                let value = self.expression(current);
+
+                return ParsedAST::DECL(Decl {
+                    identifier,
+                    requires_infering: true,
+                    value: Some(Box::new(value)),
+                });
+            }
+            Token::IDENTIFIER(identifier) => {
+                // doing assign
+                self.consume(current);
+                // consume the =
+                self.consume(current);
+                let rhs = self.expression(current);
+                return ParsedAST::ASSIGN(Assign {
+                    lhs: Box::new(ParsedAST::IDENTIFIER(identifier.to_string())),
+                    rhs: Box::new(rhs),
+                });
+            }
             _ => return self.assign(current),
         }
 

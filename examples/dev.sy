@@ -1,10 +1,5 @@
 
-printf("outside")
 
-if x {
-    printf("hi")
-}
 
-if x {
-    printf("again")
-}
+var x = comp 444 + 7797
+x = 123

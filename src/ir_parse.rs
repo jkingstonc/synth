@@ -3,7 +3,7 @@ use std::{borrow::BorrowMut, collections::HashMap, time::Instant, vec};
 use log::debug;
 
 use crate::{
-    ast::{Binary, Block, Call, Decl, If, LeftUnary, Number, ParsedAST, Program},
+    ast::{Assign, Binary, Block, Call, Decl, If, LeftUnary, Number, ParsedAST, Program},
     compiler::CompilerOptions,
     ir::{IRValue, Instruction, Ref},
     ir_interpret::IRInterpreter,
@@ -91,7 +91,7 @@ impl IRParser<'_> {
             // ParsedAST::FOR(forr) => self.type_check_for(forr),
             // ParsedAST::RET(ret) => self.type_check_ret(ret),
             // ParsedAST::DECL(decl) => self.type_check_decl(decl),
-            // ParsedAST::ASSIGN(assign) => self.type_check_assign(assign),
+            ParsedAST::ASSIGN(assign) => self.gen_assign(assign, current_block),
             // ParsedAST::FN(func) => self.type_check_func(func),
             // ParsedAST::NUMBER(num) => self.type_check_num(num),
             ParsedAST::LEFT_UNARY(left_unary) => self.gen_left_unary(left_unary, current_block), //self.type_check_binary(binary),
@@ -307,6 +307,31 @@ impl IRParser<'_> {
             }
         }
 
+        (None, None)
+    }
+
+    fn gen_assign(
+        &mut self,
+        assign: &mut Assign,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<IRValue>) {
+        // new instruction?
+
+        match assign.lhs.as_mut() {
+            ParsedAST::IDENTIFIER(i) => {
+                let (_, value) = self.gen_ast(&mut assign.rhs, current_block);
+                self.write_instruction_to_block(
+                    Instruction::STORE(
+                        Ref {
+                            value: i.to_string(),
+                        },
+                        value.unwrap(),
+                    ),
+                    current_block,
+                );
+            }
+            _ => todo!(),
+        }
         (None, None)
     }
 
