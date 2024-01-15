@@ -541,6 +541,9 @@ impl LLVMCodeGenerator {
                 b"entry\0".as_ptr() as *const _,
             );
             LLVMPositionBuilderAtEnd(builder, bb);
+
+            self.generate_instruction(instruction, context, module, builder, bb, function);
+
             LLVMBuildRetVoid(builder);
 
             LLVMPositionBuilderAtEnd(builder, current_block);
