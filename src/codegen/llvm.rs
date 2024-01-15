@@ -3,14 +3,14 @@ use llvm_sys::core::{
     LLVMAppendBasicBlock, LLVMAppendBasicBlockInContext, LLVMArrayType, LLVMArrayType2,
     LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall2,
     LLVMBuildCast, LLVMBuildCondBr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildICmp,
-    LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2, LLVMBuildStore, LLVMConstInt,
-    LLVMConstPointerNull, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal, LLVMInt1Type,
-    LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder, LLVMPositionBuilderAtEnd,
-    LLVMVoidType,
+    LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2, LLVMBuildRetVoid, LLVMBuildStore,
+    LLVMConstInt, LLVMConstPointerNull, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal,
+    LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder,
+    LLVMPositionBuilderAtEnd, LLVMVoidType,
 };
 use llvm_sys::execution_engine::LLVMGetGlobalValueAddress;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
-use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMContext, LLVMValue};
+use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMContext, LLVMModule, LLVMValue};
 use log::{debug, error, info, warn};
 use std::ffi::{CStr, CString};
 use std::fmt::format;
@@ -83,7 +83,7 @@ impl LLVMCodeGenerator {
 
             llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
-            self.generate_instruction(instruction, context, builder, bb, function);
+            self.generate_instruction(instruction, context, module, builder, bb, function);
 
             // llvm_sys::core::LLVMPositionBuilderAtEnd(builder, bb);
 
@@ -159,6 +159,7 @@ impl LLVMCodeGenerator {
         &mut self,
         instruction: &Instruction,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -167,6 +168,7 @@ impl LLVMCodeGenerator {
             Instruction::PROGRAM(instructions) => self.generate_program(
                 instructions,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -174,6 +176,7 @@ impl LLVMCodeGenerator {
             Instruction::BLOCK(name, instructions) => self.generate_block(
                 instructions,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -183,6 +186,7 @@ impl LLVMCodeGenerator {
                 first,
                 second,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -191,6 +195,7 @@ impl LLVMCodeGenerator {
                 location,
                 value,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -199,6 +204,7 @@ impl LLVMCodeGenerator {
                 location,
                 value,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -208,6 +214,7 @@ impl LLVMCodeGenerator {
                 callee,
                 arg,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -216,6 +223,16 @@ impl LLVMCodeGenerator {
                 storee,
                 value,
                 context,
+                module,
+                builder,
+                current_block,
+                current_function,
+            ),
+            Instruction::FUNC(name, instruction) => self.generate_func(
+                name,
+                instruction,
+                context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -229,6 +246,7 @@ impl LLVMCodeGenerator {
                 body,
                 else_body,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -240,7 +258,7 @@ impl LLVMCodeGenerator {
     // todo this is leaking reallllll bad!
     fn string_to_c_str(&self, string: &String) -> *const i8 {
         let c = CString::new(string.to_string()).unwrap();
-        c.as_ptr() as *const _
+        c.as_ptr()
     }
 
     fn ir_value_to_llvm_value(
@@ -287,6 +305,7 @@ impl LLVMCodeGenerator {
         &mut self,
         instructions: &Box<Vec<Instruction>>,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -295,6 +314,7 @@ impl LLVMCodeGenerator {
             self.generate_instruction(
                 instruction,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -307,6 +327,7 @@ impl LLVMCodeGenerator {
         &mut self,
         instructions: &Box<Vec<Instruction>>,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -315,6 +336,7 @@ impl LLVMCodeGenerator {
             self.generate_instruction(
                 instruction,
                 context,
+                module,
                 builder,
                 current_block,
                 current_function,
@@ -328,6 +350,7 @@ impl LLVMCodeGenerator {
         label: &String,
         value: &Ref,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -366,6 +389,7 @@ impl LLVMCodeGenerator {
         body: &Box<Instruction>,
         else_body: &Option<Box<Instruction>>,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -441,7 +465,14 @@ impl LLVMCodeGenerator {
             LLVMBuildCondBr(builder, cond_value, then_block, else_block);
 
             LLVMPositionBuilderAtEnd(builder, then_block);
-            self.generate_instruction(&body, context, builder, current_block, current_function);
+            self.generate_instruction(
+                &body,
+                context,
+                module,
+                builder,
+                current_block,
+                current_function,
+            );
             LLVMBuildBr(builder, done_block);
 
             // print positioning here!
@@ -450,6 +481,7 @@ impl LLVMCodeGenerator {
                 self.generate_instruction(
                     else_body_instruction,
                     context,
+                    module,
                     builder,
                     current_block,
                     current_function,
@@ -468,6 +500,7 @@ impl LLVMCodeGenerator {
         storee: &Ref,
         value: &IRValue,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -480,12 +513,48 @@ impl LLVMCodeGenerator {
         }
         None
     }
+
+    fn generate_func(
+        &mut self,
+        name: &String,
+        instruction: &Instruction,
+        context: *mut LLVMContext,
+        module: *mut LLVMModule,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+        current_function: *mut LLVMValue,
+    ) -> Option<*mut LLVMValue> {
+        unsafe {
+            let void = LLVMVoidType();
+            let function_type = llvm_sys::core::LLVMFunctionType(void, std::ptr::null_mut(), 0, 0);
+            let function = llvm_sys::core::LLVMAddFunction(
+                module,
+                // b"lol\0".as_ptr() as *const _,
+                self.string_to_c_str(name),
+                function_type,
+            );
+            // Create a basic block in the function and set our builder to generate
+            // code in it.
+            let bb = llvm_sys::core::LLVMAppendBasicBlockInContext(
+                context,
+                function,
+                b"entry\0".as_ptr() as *const _,
+            );
+            LLVMPositionBuilderAtEnd(builder, bb);
+            LLVMBuildRetVoid(builder);
+
+            LLVMPositionBuilderAtEnd(builder, current_block);
+        }
+        None
+    }
+
     fn generate_call(
         &mut self,
         label: &String,
         callee: &String,
         arg: &IRValue,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -561,6 +630,7 @@ impl LLVMCodeGenerator {
         label: &String,
         value: &Option<IRValue>,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
@@ -668,6 +738,7 @@ impl LLVMCodeGenerator {
         first: &IRValue,
         second: &IRValue,
         context: *mut LLVMContext,
+        module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
         current_block: *mut LLVMBasicBlock,
         current_function: *mut LLVMValue,
