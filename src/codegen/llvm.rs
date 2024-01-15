@@ -473,18 +473,10 @@ impl LLVMCodeGenerator {
         current_function: *mut LLVMValue,
     ) -> Option<*mut LLVMValue> {
         unsafe {
+            let llvm_value = self.ir_value_to_llvm_value(value, builder);
             let storee_ptr = self.sym_table.get(storee.value.to_string()).unwrap();
             // todo make a generic way to get an llvm value from an IRValue
-            match value {
-                IRValue::INT(i) => {
-                    LLVMBuildStore(
-                        builder,
-                        LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
-                        storee_ptr.llvm_value.clone(),
-                    );
-                }
-                _ => todo!(),
-            }
+            LLVMBuildStore(builder, llvm_value, storee_ptr.llvm_value.clone());
         }
         None
     }
