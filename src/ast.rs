@@ -73,6 +73,14 @@ pub struct Block<'a> {
 }
 
 #[derive(Debug)]
+pub struct Fun<'a> {
+    // pub typ: Type,
+    pub identifier: Option<String>,
+    pub params: Vec<Decl<'a>>,
+    pub body: Box<ParsedAST<'a>>,
+}
+
+#[derive(Debug)]
 pub enum LeftUnary<'a> {
     COMP(Box<ParsedAST<'a>>),
 }
@@ -91,7 +99,7 @@ pub enum ParsedAST<'a> {
     ASSIGN(Assign<'a>),
     IDENTIFIER(String),
     STRING(String),
-    // FN(Fn<'a>),
+    FN(Fun<'a>),
     NUMBER(Number),
     LEFT_UNARY(LeftUnary<'a>),
     BINARY(Binary<'a>),

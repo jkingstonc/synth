@@ -88,6 +88,7 @@ fn main() {
             let mut ir_parser = ir_parse::IRParser {
                 compiler_options: &compiler_options,
                 counter: 0,
+                lambda_counter: 0,
                 block_counter: 0,
                 locals_counter: 0,
             };
@@ -126,6 +127,7 @@ fn main() {
     let mut ir_parser = ir_parse::IRParser {
         compiler_options: &compiler_options,
         counter: 0,
+        lambda_counter: 0,
         block_counter: 0,
         locals_counter: 0,
     };

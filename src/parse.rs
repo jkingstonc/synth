@@ -1,9 +1,10 @@
+use std::process::id;
 use std::time::Instant;
 
 use log::debug;
 
 use crate::ast::{
-    Assign, Binary, Block, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, If,
+    Assign, Binary, Block, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, Fun, If,
     LeftUnary, LhsAccess, Number, ParsedAST, Program,
 };
 use crate::token::Token;
@@ -370,6 +371,18 @@ impl Parser<'_> {
 
     fn single(&self, current: &mut usize) -> ParsedAST {
         match self.peek(current) {
+            Token::FN => {
+                self.consume(current);
+                let identifier = self.consume(current);
+                if let Token::IDENTIFIER(i) = identifier {
+                    return ParsedAST::FN(Fun {
+                        identifier: Some(i.to_string()),
+                        params: vec![],
+                        body: Box::new(self.statement(current)),
+                    });
+                }
+                panic!("expected identifier");
+            }
             // Token::HASH => {
             //     self.consume(current);
             //     let value = self.consume(current);

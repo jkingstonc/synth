@@ -48,6 +48,7 @@ pub enum Instruction {
     COND_BR(IRValue, Box<Instruction>, Option<Box<Instruction>>),
     // first arg is the function to call, the second is the first param (todo support more params)
     CALL(String, String, IRValue),
+    FUNC(String, Box<Instruction>),
 }
 
 impl Instruction {
@@ -85,6 +86,9 @@ impl Instruction {
                     "{:<15} = {:<10} {} args [{:?}]",
                     location, "call", callee, arg
                 )
+            }
+            Instruction::FUNC(name, instructions) => {
+                format!("def {:<15} = {:?}", name, instructions)
             }
             Instruction::COND_BR(condition, body, else_body) => {
                 if let Some(else_body_unwrapped) = else_body {

@@ -3,7 +3,7 @@ use std::{borrow::BorrowMut, collections::HashMap, time::Instant, vec};
 use log::debug;
 
 use crate::{
-    ast::{Assign, Binary, Block, Call, Decl, If, LeftUnary, Number, ParsedAST, Program},
+    ast::{Assign, Binary, Block, Call, Decl, Fun, If, LeftUnary, Number, ParsedAST, Program},
     compiler::CompilerOptions,
     ir::{IRValue, Instruction, Ref},
     ir_interpret::IRInterpreter,
@@ -13,6 +13,7 @@ use crate::{
 pub struct IRParser<'a> {
     pub compiler_options: &'a CompilerOptions,
     pub counter: usize,
+    pub lambda_counter: usize,
     pub block_counter: usize,
     pub locals_counter: usize,
 }
@@ -92,7 +93,7 @@ impl IRParser<'_> {
             // ParsedAST::RET(ret) => self.type_check_ret(ret),
             // ParsedAST::DECL(decl) => self.type_check_decl(decl),
             ParsedAST::ASSIGN(assign) => self.gen_assign(assign, current_block),
-            // ParsedAST::FN(func) => self.type_check_func(func),
+            ParsedAST::FN(func) => self.gen_func(func, current_block),
             // ParsedAST::NUMBER(num) => self.type_check_num(num),
             ParsedAST::LEFT_UNARY(left_unary) => self.gen_left_unary(left_unary, current_block), //self.type_check_binary(binary),
             // ParsedAST::BINARY(binary) => self.type_check_binary(binary),
@@ -308,6 +309,25 @@ impl IRParser<'_> {
         }
 
         (None, None)
+    }
+
+    fn gen_func(
+        &mut self,
+        func: &mut Fun,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<IRValue>) {
+        let mut name: String;
+        if func.identifier.is_some() {
+            name = func.identifier.as_mut().unwrap().to_string();
+        } else {
+            name = format!("{}_lambda", self.lambda_counter);
+            self.lambda_counter += 1;
+        }
+
+        let (i, _) = self.gen_ast(&mut func.body, current_block);
+        let func_instruction = Instruction::FUNC(name, Box::new(i.unwrap()));
+
+        (Some(func_instruction), None)
     }
 
     fn gen_assign(
