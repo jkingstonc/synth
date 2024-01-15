@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::process::id;
 use std::time::Instant;
 
@@ -5,9 +6,10 @@ use log::debug;
 
 use crate::ast::{
     Assign, Binary, Block, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, Fun, If,
-    LeftUnary, LhsAccess, Number, ParsedAST, Program,
+    LeftUnary, LhsAccess, Number, ParsedAST, Program, Typ,
 };
 use crate::token::Token;
+use crate::types::Type;
 
 pub struct Parser<'a> {
     pub tokens: &'a Box<Vec<Token>>,
@@ -383,6 +385,34 @@ impl Parser<'_> {
                 }
                 panic!("expected identifier");
             }
+            Token::TYPE => {
+                // we have a type definition!
+                // consume the type
+                self.consume(current);
+                // consume the {
+                self.consume(current);
+                let mut fields: HashMap<String, Type> = HashMap::new();
+
+                while !self.expecting(Token::RCURLY, current) {
+                    let identifier = self.consume(current);
+
+                    match identifier {
+                        Token::IDENTIFIER(i) => {
+                            // consume the :
+                            // todo we need a method to consume a token and crash if we dont find it
+                            self.consume_expected(current, Token::COLON);
+                            let typ = self.type_from_token(self.consume(current));
+                            fields.insert(i.to_string(), typ);
+                        }
+                        _ => panic!("expected identifier"),
+                    }
+                }
+
+                // consume the rbracket
+                self.consume(current);
+
+                ParsedAST::TYPE(Typ { fields })
+            }
             // Token::HASH => {
             //     self.consume(current);
             //     let value = self.consume(current);
@@ -495,6 +525,27 @@ impl Parser<'_> {
                 return t;
             }
             _ => panic!("there are no tokens at the current index {}", *current),
+        }
+    }
+
+    fn consume_expected(&self, current: &mut usize, token_expected: Token) -> &Token {
+        match self.tokens.get(*current) {
+            std::option::Option::Some(t) => {
+                if *t != token_expected {
+                    panic!("expected {:?} found {:?}", token_expected, t);
+                }
+                *current += 1;
+                return t;
+            }
+            _ => panic!("there are no tokens at the current index {}", *current),
+        }
+    }
+
+    fn type_from_token(&self, token: &Token) -> Type {
+        match token {
+            Token::U32 => Type::U32,
+            Token::I32 => Type::I32,
+            _ => panic!("expected type"),
         }
     }
 }

@@ -3,7 +3,7 @@ use std::{borrow::BorrowMut, collections::HashMap, time::Instant, vec};
 use log::debug;
 
 use crate::{
-    ast::{Assign, Binary, Block, Call, Decl, Fun, If, LeftUnary, Number, ParsedAST, Program},
+    ast::{Assign, Binary, Block, Call, Decl, Fun, If, LeftUnary, Number, ParsedAST, Program, Typ},
     compiler::CompilerOptions,
     ir::{IRValue, Instruction, Ref},
     ir_interpret::IRInterpreter,
@@ -101,6 +101,7 @@ impl IRParser<'_> {
             // ParsedAST::STRUCT_TYPES_LIST(s) => None, // todo
             // ParsedAST::LHS_ACCESS(lhs_access) => None, // todo
             // ParsedAST::GROUP(_) => None, // todo
+            ParsedAST::TYPE(typ) => self.gen_typ(typ, current_block),
             _ => panic!(),
         }
     }
@@ -265,6 +266,14 @@ impl IRParser<'_> {
         let mut new_block = Instruction::BLOCK(format!("{:?}", block_id), new_block_instructions);
         // self.write_instruction_to_block(new_block, current_block);
         (Some(new_block), None)
+    }
+
+    fn gen_typ(
+        &mut self,
+        typ: &mut Typ,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<IRValue>) {
+        (None, None)
     }
 
     fn gen_left_unary(

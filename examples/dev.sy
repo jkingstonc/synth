@@ -3,24 +3,7 @@
 
 
 
-
-
-fn do_cool_stuff {
-
-
-    fn i_am_nested {
-        printf("some nested code")
-    }
-
-    printf("some cool stuff\n")
-    printf("im in a function!\n")
-
-    i_am_nested()
-
+const Point = type {
+    x: i32
 }
 
-
-
-
-
-do_cool_stuff(2, 4, 5)

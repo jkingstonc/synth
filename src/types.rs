@@ -5,7 +5,7 @@ pub struct FnPrimative {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum Primative {
+pub enum Type {
     U32,
     I32,
     F32,
@@ -18,18 +18,13 @@ pub enum Primative {
     STRUCT,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Type {
-    pub primative: Primative,
-}
-
 impl Type {
     pub fn size_in_bytes(&self) -> usize {
-        match self.primative.to_owned() {
-            Primative::U32 => 4,
-            Primative::I32 => 4,
-            Primative::F32 => 4,
-            Primative::STRUCT => todo!("size of struct"),
+        match self {
+            Type::U32 => 4,
+            Type::I32 => 4,
+            Type::F32 => 4,
+            Type::STRUCT => todo!("size of struct"),
             _ => panic!("unknown type"),
         }
     }

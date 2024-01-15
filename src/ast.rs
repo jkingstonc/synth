@@ -1,4 +1,6 @@
-use crate::token::Token;
+use std::collections::HashMap;
+
+use crate::{token::Token, types::Type};
 
 #[derive(Debug)]
 pub struct Program<'a> {
@@ -85,6 +87,11 @@ pub enum LeftUnary<'a> {
     COMP(Box<ParsedAST<'a>>),
 }
 
+#[derive(Debug)]
+pub struct Typ {
+    pub fields: HashMap<String, Type>,
+}
+
 // todo this should be a struct so we get positional information
 #[derive(Debug)]
 pub enum ParsedAST<'a> {
@@ -105,6 +112,7 @@ pub enum ParsedAST<'a> {
     BINARY(Binary<'a>),
     // GROUP(Group<'a>),
     CALL(Call<'a>),
+    TYPE(Typ),
     // STRUCT_TYPES_LIST(StructTypesList<'a>),
     LHS_ACCESS(LhsAccess<'a>),
     // DIRECTIVE(Directive<'a>),
