@@ -537,6 +537,15 @@ impl LLVMCodeGenerator {
                 function,
                 b"entry\0".as_ptr() as *const _,
             );
+
+            self.sym_table.add(
+                name.to_string(),
+                LLVMValueBundle {
+                    llvm_value: function,
+                    is_ref: false,
+                },
+            );
+
             LLVMPositionBuilderAtEnd(builder, bb);
 
             self.generate_instruction(instruction, context, module, builder, bb, function);
@@ -577,6 +586,9 @@ impl LLVMCodeGenerator {
             let printf_var_ptr = printf_var.as_ptr();
 
             match arg {
+                IRValue::INT(i) => {
+                    // todo
+                }
                 IRValue::REF(r) => {
                     let mut arg0 = self
                         .sym_table
