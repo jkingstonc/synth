@@ -8,6 +8,7 @@ use crate::{
     ir::{IRValue, Instruction, Ref},
     ir_interpret::IRInterpreter,
     token::Token,
+    types::Type,
 };
 
 pub struct IRParser<'a> {
@@ -94,6 +95,7 @@ impl IRParser<'_> {
             // ParsedAST::DECL(decl) => self.type_check_decl(decl),
             ParsedAST::ASSIGN(assign) => self.gen_assign(assign, current_block),
             ParsedAST::FN(func) => self.gen_func(func, current_block),
+            ParsedAST::TYPE(typ) => self.gen_type(typ, current_block),
             // ParsedAST::NUMBER(num) => self.type_check_num(num),
             ParsedAST::LEFT_UNARY(left_unary) => self.gen_left_unary(left_unary, current_block), //self.type_check_binary(binary),
             // ParsedAST::BINARY(binary) => self.type_check_binary(binary),
@@ -318,6 +320,16 @@ impl IRParser<'_> {
         }
 
         (None, None)
+    }
+
+    // todo we need to do name resolving here!!!
+    fn gen_type(
+        &mut self,
+        typ: &mut Typ,
+        current_block: &mut Box<Vec<Instruction>>,
+    ) -> (Option<Instruction>, Option<IRValue>) {
+        let type_instruction = Instruction::TYPE("anon_type".to_string());
+        (Some(type_instruction), None)
     }
 
     fn gen_func(

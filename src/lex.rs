@@ -228,7 +228,7 @@ impl Lexer {
         let c = self.program.chars().nth(self.current).unwrap();
         if c.is_digit(10) {
             self.number();
-        } else if c.is_alphabetic() {
+        } else if c.is_alphabetic() || c == '_' {
             self.identifier();
         } else if c.eq_ignore_ascii_case(&'"') || c.eq_ignore_ascii_case(&'\'') {
             self.string();

@@ -49,6 +49,8 @@ pub enum Instruction {
     // first arg is the function to call, the second is the first param (todo support more params)
     CALL(String, String, Vec<IRValue>),
     FUNC(String, Box<Instruction>),
+    // todo need to decide if this is typed/untyped!
+    TYPE(String),
 }
 
 impl Instruction {
@@ -89,6 +91,9 @@ impl Instruction {
             }
             Instruction::FUNC(name, instructions) => {
                 format!("def {:<15} = {:?}", name, instructions)
+            }
+            Instruction::TYPE(name) => {
+                format!("type {:<15}", name,)
             }
             Instruction::COND_BR(condition, body, else_body) => {
                 if let Some(else_body_unwrapped) = else_body {
