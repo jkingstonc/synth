@@ -2,10 +2,10 @@ extern crate llvm_sys;
 use llvm_sys::core::{
     LLVMAppendBasicBlock, LLVMAppendBasicBlockInContext, LLVMArrayType, LLVMArrayType2,
     LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBr, LLVMBuildCall2, LLVMBuildCondBr,
-    LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildLoad2, LLVMBuildStore, LLVMConstInt,
-    LLVMConstPointerNull, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal, LLVMInt1Type,
-    LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder, LLVMPositionBuilderAtEnd,
-    LLVMVoidType,
+    LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildIntCast, LLVMBuildLoad2,
+    LLVMBuildStore, LLVMConstInt, LLVMConstPointerNull, LLVMCreateBasicBlockInContext,
+    LLVMGetNamedGlobal, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
+    LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMVoidType,
 };
 use llvm_sys::execution_engine::LLVMGetGlobalValueAddress;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
@@ -21,6 +21,7 @@ use std::{fs, process::Command};
 use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
 pub struct LLVMCodeGenerator {
+    pub anon_local_counter: usize,
     pub anon_string_counter: usize,
     pub anon_local_block_counter: usize,
     pub str_buffer: String,
@@ -307,7 +308,35 @@ impl LLVMCodeGenerator {
     ) -> Option<*mut LLVMValue> {
         // todo get the value
         unsafe {
-            let val = LLVMConstInt(LLVMInt1Type(), 1 as u64, 1);
+            // let val = LLVMConstInt(LLVMInt1Type(), 1 as u64, 1);
+
+            let int_cast_c_str = CString::new(format!("{}", self.anon_local_counter)).unwrap();
+            self.anon_local_counter += 1;
+            let int_cast_c_str_ptr = int_cast_c_str.as_ptr();
+            let mut cond_value: *mut LLVMValue;
+            match condition {
+                IRValue::INT(i) => {
+                    cond_value = LLVMBuildIntCast(
+                        builder,
+                        LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
+                        LLVMInt1Type(),
+                        int_cast_c_str_ptr,
+                    );
+                }
+                IRValue::REF(r) => {
+                    let int_val = self.sym_table.get(r.value.to_string()).unwrap();
+                    let load_c_str: CString =
+                        CString::new(format!("{}", self.anon_local_counter)).unwrap();
+                    self.anon_local_counter += 1;
+                    let load_c_str_ptr = load_c_str.as_ptr();
+                    let load_instr =
+                        LLVMBuildLoad2(builder, LLVMInt32Type(), int_val.clone(), load_c_str_ptr);
+                    cond_value =
+                        LLVMBuildIntCast(builder, load_instr, LLVMInt1Type(), int_cast_c_str_ptr);
+                }
+                _ => todo!(),
+            }
+
             // Create a basic block in the function and set our builder to generate
             // code in it.
             let then_body_str =
@@ -328,7 +357,7 @@ impl LLVMCodeGenerator {
             let done_str_ptr = done_str.as_ptr();
             let done_block = LLVMAppendBasicBlockInContext(context, current_function, done_str_ptr);
 
-            LLVMBuildCondBr(builder, val, then_block, else_block);
+            LLVMBuildCondBr(builder, cond_value, then_block, else_block);
 
             LLVMPositionBuilderAtEnd(builder, then_block);
             self.generate_instruction(&body, context, builder, current_block, current_function);
