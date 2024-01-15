@@ -6,11 +6,16 @@
 
 
 fn do_cool_stuff {
-    printf("some cool stuff")
+    printf("some cool stuff\n")
+    printf("im in a function!\n")
 }
 
 
 
 
 
+do_cool_stuff()
+do_cool_stuff()
+do_cool_stuff()
+do_cool_stuff()
 do_cool_stuff()
