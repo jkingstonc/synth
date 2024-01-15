@@ -225,8 +225,36 @@ impl LLVMCodeGenerator {
         }
     }
 
-    fn instruction_data_to_llvm_value_ref(&mut self) -> LLVMValueRef {
-        unsafe { llvm_sys::core::LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 4, 1) }
+    fn ir_value_to_llvm_value(
+        &mut self,
+        ir_value: &IRValue,
+        builder: *mut LLVMBuilder,
+    ) -> LLVMValueRef {
+        // unsafe { llvm_sys::core::LLVMConstInt(llvm_sys::core::LLVMInt32Type(), 4, 1) }
+
+        unsafe {
+            match ir_value {
+                IRValue::INT(i) => LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
+                IRValue::FLOAT(_) => todo!(),
+                IRValue::REF(r) => {
+                    let ptr = self
+                        .sym_table
+                        .get(r.value.to_owned())
+                        .expect("expected value");
+                    debug!(
+                        "ir_value_to_llvm_value = ir_value {:?} ptr_value {:?}",
+                        ir_value, ptr
+                    );
+                    let c_str = CString::new(format!("{}_local", self.anon_local_counter)).unwrap();
+                    self.anon_local_counter += 1;
+                    let c_str_ptr = c_str.as_ptr();
+                    // memory leaks here
+                    LLVMBuildLoad2(builder, LLVMInt32Type(), ptr.clone(), c_str_ptr)
+                }
+                IRValue::STRING(_) => todo!(),
+                IRValue::INTRINSIC(_) => todo!(),
+            }
+        }
     }
 
     fn generate_program(
@@ -528,6 +556,12 @@ impl LLVMCodeGenerator {
                             ),
                             alloca_instruction,
                         );
+                        // todo this may be causing issues here? do we want to directly put the instruction?
+                        debug!(
+                            "putting {:?} into sym table {:?}",
+                            label.to_string(),
+                            alloca_instruction
+                        );
                         self.sym_table.add(label.to_string(), alloca_instruction);
                     }
                     IRValue::STRING(s) => {
@@ -579,20 +613,23 @@ impl LLVMCodeGenerator {
         current_function: *mut LLVMValue,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            let mut left: LLVMValueRef;
-            let mut right: LLVMValueRef;
-            match first {
-                IRValue::INT(i) => {
-                    left = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
-                }
-                _ => todo!("not implemented"),
-            }
-            match second {
-                IRValue::INT(i) => {
-                    right = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
-                }
-                _ => todo!("not implemented"),
-            }
+            // let mut left: LLVMValueRef;
+            // let mut right: LLVMValueRef;
+            // match first {
+            //     IRValue::INT(i) => {
+            //         left = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
+            //     }
+            //     _ => todo!("not implemented"),
+            // }
+            // match second {
+            //     IRValue::INT(i) => {
+            //         right = LLVMConstInt(llvm_sys::core::LLVMInt32Type(), *i as u64, 1)
+            //     }
+            //     _ => todo!("not implemented"),
+            // }
+
+            let left = self.ir_value_to_llvm_value(first, builder);
+            let right = self.ir_value_to_llvm_value(second, builder);
 
             let add_instr = llvm_sys::core::LLVMBuildAdd(
                 builder,
