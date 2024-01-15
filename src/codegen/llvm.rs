@@ -263,7 +263,6 @@ impl LLVMCodeGenerator {
                     let c_string =
                         self.string_to_c_str(&format!("{}_local", self.anon_local_counter));
                     self.anon_local_counter += 1;
-                    debug!("looking up ref! {:?}", r);
                     if value_bundle.is_ref {
                         // todo this is not always right. we don't want to load if its not an alloca instruction.
                         // say its just an add instruction in the symbol table, we want to return that.

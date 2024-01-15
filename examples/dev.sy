@@ -2,10 +2,18 @@
 
 const x = 2
 
-if x + 3 {
+if x + 23 + 45 {
     printf("sort of working\n")
 }
 
+
+
+{
+
+
+    printf("this is a block")
+
+}
 
 
 
