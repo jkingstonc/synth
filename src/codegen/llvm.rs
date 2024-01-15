@@ -255,7 +255,7 @@ impl LLVMCodeGenerator {
         }
     }
 
-    // todo this is leaking reallllll bad!
+    // todo this fundementally doesn't work as rust strings are awful
     fn string_to_c_str(&self, string: &String) -> *const i8 {
         let c = CString::new(string.to_string()).unwrap();
         c.as_ptr()
@@ -527,14 +527,11 @@ impl LLVMCodeGenerator {
         unsafe {
             let void = LLVMVoidType();
             let function_type = llvm_sys::core::LLVMFunctionType(void, std::ptr::null_mut(), 0, 0);
-            let function = llvm_sys::core::LLVMAddFunction(
-                module,
-                // b"lol\0".as_ptr() as *const _,
-                self.string_to_c_str(name),
-                function_type,
-            );
-            // Create a basic block in the function and set our builder to generate
-            // code in it.
+
+            let fn_name = CString::new(name.to_string()).unwrap();
+            let ptr_fn_name = fn_name.as_ptr();
+
+            let function = llvm_sys::core::LLVMAddFunction(module, ptr_fn_name, function_type);
             let bb = llvm_sys::core::LLVMAppendBasicBlockInContext(
                 context,
                 function,
