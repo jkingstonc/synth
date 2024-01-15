@@ -13,4 +13,4 @@ fn do_cool_stuff {
 
 
 
-do_cool_stuff(1)
+do_cool_stuff()

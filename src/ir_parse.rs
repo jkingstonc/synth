@@ -377,7 +377,12 @@ impl IRParser<'_> {
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
 
-        let args: Vec<IRValue> = vec![];
+        let mut args: Vec<IRValue> = vec![];
+
+        for arg in call.args.iter_mut() {
+            let (instr, val) = self.gen_ast(arg, current_block);
+            args.push(val.unwrap());
+        }
 
         self.write_instruction_to_block(
             Instruction::CALL(

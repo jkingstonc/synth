@@ -4,9 +4,9 @@ use llvm_sys::core::{
     LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall2,
     LLVMBuildCast, LLVMBuildCondBr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildICmp,
     LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2, LLVMBuildRetVoid, LLVMBuildStore,
-    LLVMConstInt, LLVMConstPointerNull, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal,
-    LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType, LLVMPositionBuilder,
-    LLVMPositionBuilderAtEnd, LLVMVoidType,
+    LLVMConstArray2, LLVMConstInt, LLVMConstPointerNull, LLVMCreateBasicBlockInContext,
+    LLVMGetNamedGlobal, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
+    LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMVoidType,
 };
 use llvm_sys::execution_engine::LLVMGetGlobalValueAddress;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
@@ -295,7 +295,18 @@ impl LLVMCodeGenerator {
 
                     value_bundle.llvm_value
                 }
-                IRValue::STRING(_) => todo!(),
+                IRValue::STRING(s) => {
+                    // todo make this better, helper function for creating llvm strings
+                    let c_str = CString::new(s.to_string()).expect("i am a c string");
+                    let ptr = c_str.as_ptr();
+                    let c_str_label =
+                        CString::new(format!("{}_anon_string", self.anon_string_counter))
+                            .expect("i am a c string");
+                    self.anon_string_counter += 1;
+                    let ptr_label = c_str_label.as_ptr();
+                    let mut llvm_string_value = LLVMBuildGlobalString(builder, ptr, ptr_label);
+                    llvm_string_value
+                }
                 IRValue::INTRINSIC(_) => todo!(),
             }
         }
@@ -577,13 +588,32 @@ impl LLVMCodeGenerator {
 
             let function_type = llvm_sys::core::LLVMFunctionType(
                 LLVMInt32Type(),
-                &mut LLVMPointerType(LLVMInt8Type(), 0),
+                // &mut LLVMPointerType(LLVMInt8Type(), 0),
+                &mut LLVMVoidType(),
                 1,
                 0,
             );
 
             let printf_var = CString::new("call_result").expect("i am a c string");
             let printf_var_ptr = printf_var.as_ptr();
+
+            // todo the callee shouldn't always be a string
+            let func = self.sym_table.get(callee.to_string()).unwrap().llvm_value;
+
+            let mut args_vec: Vec<*mut LLVMValue> = vec![];
+            for arg in args {
+                // todo i need to get the value of that string!
+                args_vec.push(self.ir_value_to_llvm_value(arg, builder));
+            }
+            LLVMBuildCall2(
+                builder,
+                function_type,
+                func,
+                // &mut LLVMConstPointerNull(LLVMVoidType()),
+                args_vec.as_mut_ptr(),
+                args_vec.len() as u32,
+                printf_var_ptr,
+            );
 
             // match arg {
             //     IRValue::INT(i) => {
