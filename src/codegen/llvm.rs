@@ -225,6 +225,12 @@ impl LLVMCodeGenerator {
         }
     }
 
+    // todo this is leaking reallllll bad!
+    fn string_to_c_str(&self, string: &String) -> *const i8 {
+        let c = CString::new(string.to_string()).unwrap();
+        c.as_ptr() as *const _
+    }
+
     fn ir_value_to_llvm_value(
         &mut self,
         ir_value: &IRValue,
@@ -245,11 +251,15 @@ impl LLVMCodeGenerator {
                         "ir_value_to_llvm_value = ir_value {:?} ptr_value {:?}",
                         ir_value, ptr
                     );
-                    let c_str = CString::new(format!("{}_local", self.anon_local_counter)).unwrap();
+                    // let c_str = CString::new(format!("{}_local", self.anon_local_counter)).unwrap();
+                    let c_string =
+                        self.string_to_c_str(&format!("{}_local", self.anon_local_counter));
                     self.anon_local_counter += 1;
-                    let c_str_ptr = c_str.as_ptr();
+                    // let c_str_ptr = c_str.into_raw();
                     // memory leaks here
-                    LLVMBuildLoad2(builder, LLVMInt32Type(), ptr.clone(), c_str_ptr)
+                    let tmp = LLVMBuildLoad2(builder, LLVMInt32Type(), ptr.clone(), c_string);
+                    // drop(CString::from_raw(c_string));
+                    tmp
                 }
                 IRValue::STRING(_) => todo!(),
                 IRValue::INTRINSIC(_) => todo!(),
