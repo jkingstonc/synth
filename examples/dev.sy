@@ -1,16 +1,11 @@
 
 
-
-const x = 10
-
-if x {
-    printf("in x")
+const x = 3
+const y = x + 34
 
 
-    var y = 44
-
-    if y {
-
-        printf("in y!")
-    }
+if y {
+    printf("sort of working\n")
+    printf("sort of working\n")
+    printf("sort of working\n")
 }

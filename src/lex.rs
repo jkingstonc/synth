@@ -291,11 +291,11 @@ impl Lexer {
                             self.current += 2;
                         }
                         'n' => {
-                            s.push_str("\\n");
+                            s.push_str("\n");
                             self.current += 2;
                         }
                         't' => {
-                            s.push_str("\\t");
+                            s.push_str("\t");
                             self.current += 2;
                         }
                         _ => {
