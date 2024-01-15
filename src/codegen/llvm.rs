@@ -209,10 +209,10 @@ impl LLVMCodeGenerator {
                 current_block,
                 current_function,
             ),
-            Instruction::CALL(location, callee, arg) => self.generate_call(
+            Instruction::CALL(location, callee, args) => self.generate_call(
                 location,
                 callee,
-                arg,
+                args,
                 context,
                 module,
                 builder,
@@ -561,7 +561,7 @@ impl LLVMCodeGenerator {
         &mut self,
         label: &String,
         callee: &String,
-        arg: &IRValue,
+        args: &Vec<IRValue>,
         context: *mut LLVMContext,
         module: *mut LLVMModule,
         builder: *mut LLVMBuilder,
@@ -585,54 +585,54 @@ impl LLVMCodeGenerator {
             let printf_var = CString::new("call_result").expect("i am a c string");
             let printf_var_ptr = printf_var.as_ptr();
 
-            match arg {
-                IRValue::INT(i) => {
-                    // todo
-                }
-                IRValue::REF(r) => {
-                    let mut arg0 = self
-                        .sym_table
-                        .get(r.value.to_string())
-                        .expect("expected value")
-                        .llvm_value
-                        .clone();
+            // match arg {
+            //     IRValue::INT(i) => {
+            //         // todo
+            //     }
+            //     IRValue::REF(r) => {
+            //         let mut arg0 = self
+            //             .sym_table
+            //             .get(r.value.to_string())
+            //             .expect("expected value")
+            //             .llvm_value
+            //             .clone();
 
-                    LLVMBuildCall2(
-                        builder,
-                        function_type,
-                        func_value,
-                        &mut arg0,
-                        // &mut LLVMConstPointerNull(LLVMVoidType()),
-                        1,
-                        printf_var_ptr,
-                    );
-                }
-                IRValue::STRING(s) => {
-                    let global_label =
-                        CString::new(format!("{}_anon_string", self.anon_string_counter))
-                            .expect("i am a c string");
-                    let global_label_ptr = global_label.as_ptr();
-                    let s_value = CString::new(s.to_string()).expect("i am a c string");
-                    let s_value_ptr = s_value.as_ptr();
-                    let mut string_value =
-                        LLVMBuildGlobalString(builder, s_value_ptr, global_label_ptr);
+            //         LLVMBuildCall2(
+            //             builder,
+            //             function_type,
+            //             func_value,
+            //             &mut arg0,
+            //             // &mut LLVMConstPointerNull(LLVMVoidType()),
+            //             1,
+            //             printf_var_ptr,
+            //         );
+            //     }
+            //     IRValue::STRING(s) => {
+            //         let global_label =
+            //             CString::new(format!("{}_anon_string", self.anon_string_counter))
+            //                 .expect("i am a c string");
+            //         let global_label_ptr = global_label.as_ptr();
+            //         let s_value = CString::new(s.to_string()).expect("i am a c string");
+            //         let s_value_ptr = s_value.as_ptr();
+            //         let mut string_value =
+            //             LLVMBuildGlobalString(builder, s_value_ptr, global_label_ptr);
 
-                    // let mut arg0 = self.sym_table.get("x".to_string()).unwrap().clone();
+            //         // let mut arg0 = self.sym_table.get("x".to_string()).unwrap().clone();
 
-                    LLVMBuildCall2(
-                        builder,
-                        function_type,
-                        func_value,
-                        &mut string_value,
-                        // &mut LLVMConstPointerNull(LLVMVoidType()),
-                        1,
-                        printf_var_ptr,
-                    );
+            //         LLVMBuildCall2(
+            //             builder,
+            //             function_type,
+            //             func_value,
+            //             &mut string_value,
+            //             // &mut LLVMConstPointerNull(LLVMVoidType()),
+            //             1,
+            //             printf_var_ptr,
+            //         );
 
-                    self.anon_string_counter += 1;
-                }
-                _ => todo!(),
-            }
+            //         self.anon_string_counter += 1;
+            //     }
+            //     _ => todo!(),
+            // }
         }
         None
     }

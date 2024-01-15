@@ -370,19 +370,21 @@ impl IRParser<'_> {
             _ => todo!(),
         }
 
-        // let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
-        let mut first_arg = call.args[0].borrow_mut();
-        let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
+        // // let (callee_instruction, callee_data) = self.gen_ast(&mut call.callee, current_block);
+        // let mut first_arg = call.args[0].borrow_mut();
+        // let (first_arg_instruction, first_arg_data) = self.gen_ast(first_arg, current_block);
 
         let locals_id = self.locals_counter;
         self.locals_counter += 1;
+
+        let args: Vec<IRValue> = vec![];
 
         self.write_instruction_to_block(
             Instruction::CALL(
                 locals_id.to_string(),
                 // callee_data.expect("expected callee data"),
                 f.to_string(),
-                first_arg_data.expect("expected arg data"),
+                args,
             ),
             current_block,
         );

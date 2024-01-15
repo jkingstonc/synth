@@ -47,7 +47,7 @@ pub enum Instruction {
     // first arg is the condition, second is the body, third is the else
     COND_BR(IRValue, Box<Instruction>, Option<Box<Instruction>>),
     // first arg is the function to call, the second is the first param (todo support more params)
-    CALL(String, String, IRValue),
+    CALL(String, String, Vec<IRValue>),
     FUNC(String, Box<Instruction>),
 }
 

@@ -45,7 +45,7 @@ impl IRInterpreter<'_> {
             Instruction::STACK_VAR(label, value) => self.execute_stack_var(label, value),
             Instruction::LOAD(label, value) => self.execute_load(label, value),
             Instruction::ADD(label, left, right) => self.execute_add(label, left, right),
-            Instruction::CALL(label, callee, arg) => self.execute_call(label, callee, arg),
+            Instruction::CALL(label, callee, args) => self.execute_call(label, callee, args),
             Instruction::COND_BR(condition, body, else_body) => {
                 self.execute_cond_br(condition, body, else_body)
             }
@@ -109,43 +109,49 @@ impl IRInterpreter<'_> {
         None
     }
 
-    fn execute_call(&mut self, label: &String, callee: &String, arg: &IRValue) -> Option<IRValue> {
+    fn execute_call(
+        &mut self,
+        label: &String,
+        callee: &String,
+        args: &Vec<IRValue>,
+    ) -> Option<IRValue> {
         let mut callee_data = self
             .variables_map
             .get(callee)
             .expect("could not find var")
             .clone();
 
-        match callee_data {
-            IRValue::INTRINSIC(i) => {
-                if i == "printf" {
-                    // assume that args are passed in as locals
-                    let mut arg_data: IRValue;
+        //todo
+        // match callee_data {
+        //     IRValue::INTRINSIC(i) => {
+        //         if i == "printf" {
+        //             // assume that args are passed in as locals
+        //             let mut arg_data: IRValue;
 
-                    // todo global formatter in ir.rs
-                    match arg {
-                        IRValue::REF(r) => {
-                            arg_data = self
-                                .variables_map
-                                .get(&r.value)
-                                .expect("expected arg as ref")
-                                .clone()
-                        }
-                        IRValue::INT(_) => arg_data = arg.clone(),
-                        IRValue::STRING(_) => arg_data = arg.clone(),
-                        _ => panic!("couldn't print instruction data :("),
-                    };
+        //             // todo global formatter in ir.rs
+        //             match arg {
+        //                 IRValue::REF(r) => {
+        //                     arg_data = self
+        //                         .variables_map
+        //                         .get(&r.value)
+        //                         .expect("expected arg as ref")
+        //                         .clone()
+        //                 }
+        //                 IRValue::INT(_) => arg_data = arg.clone(),
+        //                 IRValue::STRING(_) => arg_data = arg.clone(),
+        //                 _ => panic!("couldn't print instruction data :("),
+        //             };
 
-                    match arg_data {
-                        IRValue::INT(i) => println!("{}", i),
-                        IRValue::FLOAT(f) => println!("{}", f),
-                        IRValue::STRING(s) => println!("{}", s),
-                        _ => panic!("couldn't print IRValue"),
-                    };
-                }
-            }
-            _ => panic!("callee must be function or intrinsic"),
-        };
+        //             match arg_data {
+        //                 IRValue::INT(i) => println!("{}", i),
+        //                 IRValue::FLOAT(f) => println!("{}", f),
+        //                 IRValue::STRING(s) => println!("{}", s),
+        //                 _ => panic!("couldn't print IRValue"),
+        //             };
+        //         }
+        //     }
+        //     _ => panic!("callee must be function or intrinsic"),
+        // };
         None
     }
 
