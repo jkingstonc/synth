@@ -119,15 +119,20 @@ impl Parser<'_> {
                 });
             }
             Token::IDENTIFIER(identifier) => {
-                // doing assign
-                self.consume(current);
-                // consume the =
-                self.consume(current);
-                let rhs = self.expression(current);
-                return ParsedAST::ASSIGN(Assign {
-                    lhs: Box::new(ParsedAST::IDENTIFIER(identifier.to_string())),
-                    rhs: Box::new(rhs),
-                });
+                match self.peek_ahead(current, 1) {
+                    Token::EQUAL => {
+                        // doing assign
+                        self.consume(current);
+                        // consume the =
+                        self.consume(current);
+                        let rhs = self.expression(current);
+                        return ParsedAST::ASSIGN(Assign {
+                            lhs: Box::new(ParsedAST::IDENTIFIER(identifier.to_string())),
+                            rhs: Box::new(rhs),
+                        });
+                    }
+                    _ => return self.assign(current),
+                }
             }
             _ => return self.assign(current),
         }
@@ -317,7 +322,6 @@ impl Parser<'_> {
             match self.peek_ahead(current, -1) {
                 Token::IDENTIFIER(_) => {
                     if !self.end_ahead(current, 1) {
-                        // todo
                         // todo peak_ahead could fail :(
                         match self.peek(current) {
                             Token::LPAREN => {
