@@ -1,9 +1,7 @@
 
 
-
-
-
-const Point = type {
+const P = type {
     x: i32
     y: i32
+    z: i32
 }
