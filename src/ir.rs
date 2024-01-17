@@ -45,7 +45,7 @@ pub enum Instruction {
     // this will allocate a variable some memory on the stack
     // for now it can not be initialised. this is fine as we know this will be on the stack
     // so can be assigned multiple times (not a SSA in registers)
-    STACK_VAR(String, Option<IRValue>),
+    STACK_VAR(String, Type, Option<IRValue>),
     // conditional branch (as we are branching to other blocks this should be the last)
     // first arg is the condition, second is the body, third is the else
     COND_BR(IRValue, Box<Instruction>, Option<Box<Instruction>>),
@@ -80,9 +80,9 @@ impl Instruction {
             Instruction::STORE(the_storee, value) => {
                 format!("         {:<10} {:?} {:?}", "store", the_storee, value)
             }
-            Instruction::STACK_VAR(location, instruction_data) => format!(
-                "{:<15} = {:<10} {:?}",
-                location, "stack_var", instruction_data
+            Instruction::STACK_VAR(location, typ, instruction_data) => format!(
+                "{:<15} = {:<10} {:?} {:?}",
+                location, "stack_var", typ, instruction_data
             ),
             Instruction::ADD(location, left, right) => {
                 format!("{:<15} = {:<10} {:?} + {:?}", location, "add", left, right)

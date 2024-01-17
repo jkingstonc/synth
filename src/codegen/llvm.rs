@@ -39,7 +39,7 @@ pub struct LLVMCodeGenerator {
     pub sym_table: SymTable<String, LLVMValueBundle>,
 }
 
-const TYPE_STRUCT_NAME: &str = "type_struct";
+const TYPE_STRUCT_NAME: &str = "runtime_type";
 
 /*
 References:
@@ -213,8 +213,9 @@ impl LLVMCodeGenerator {
                 current_block,
                 current_function,
             ),
-            Instruction::STACK_VAR(location, value) => self.generate_stack_var(
+            Instruction::STACK_VAR(location, typ, value) => self.generate_stack_var(
                 location,
+                typ,
                 value,
                 context,
                 module,
@@ -744,6 +745,7 @@ impl LLVMCodeGenerator {
     fn generate_stack_var(
         &mut self,
         label: &String,
+        typ: &Type,
         value: &Option<IRValue>,
         context: *mut LLVMContext,
         module: *mut LLVMModule,
@@ -843,11 +845,15 @@ impl LLVMCodeGenerator {
                     }
                     IRValue::STRUCT(_) => {
                         // todo we need the struct type information :(
-                        let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
-                            builder,
-                            LLVMStructType(vec![LLVMInt32Type()].as_mut_ptr(), 1, 0),
-                            ptr,
-                        );
+
+                        let label_var =
+                            CString::new(TYPE_STRUCT_NAME.as_bytes()).expect("expected string");
+                        let label_var_ptr = label_var.as_ptr();
+                        let runtime_type = LLVMGetTypeByName2(context, label_var_ptr);
+
+                        let alloca_instruction =
+                            llvm_sys::core::LLVMBuildAlloca(builder, runtime_type, ptr);
+
                         let s = LLVMConstStruct(
                             vec![LLVMConstInt(LLVMInt32Type(), 23, 1)].as_mut_ptr(),
                             1,

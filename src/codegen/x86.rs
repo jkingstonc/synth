@@ -4,6 +4,7 @@ use std::time::Instant;
 use std::{fs, process::Command};
 
 use crate::ir::{IRValue, Instruction};
+use crate::types::Type;
 pub struct X86CodeGenerator {
     pub str_buffer: String,
 }
@@ -83,8 +84,8 @@ impl X86CodeGenerator {
         match instruction {
             Instruction::PROGRAM(instructions) => self.generate_program(instructions),
             Instruction::BLOCK(label, block) => self.generate_block(label, block),
-            Instruction::STACK_VAR(label, instruction_data) => {
-                self.generate_stack_var(label, instruction_data)
+            Instruction::STACK_VAR(label, typ, instruction_data) => {
+                self.generate_stack_var(label, typ, instruction_data)
             }
             _ => panic!("unsupported instruction"),
         };
@@ -112,7 +113,12 @@ impl X86CodeGenerator {
         }
     }
 
-    fn generate_stack_var(&mut self, label: &String, instruction_data: &Option<IRValue>) {
+    fn generate_stack_var(
+        &mut self,
+        label: &String,
+        typ: &Type,
+        instruction_data: &Option<IRValue>,
+    ) {
         if let Some(val) = instruction_data {
             self.str_buffer += &format!("mov eax, {}", self.instruction_data_to_asm_string(val));
         }

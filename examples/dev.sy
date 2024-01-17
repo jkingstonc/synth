@@ -6,3 +6,6 @@ const Point: type = type {
     y: i32
     z: i32
 }
+
+
+printf("i just got types working.... ?")

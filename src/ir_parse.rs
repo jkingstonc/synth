@@ -250,6 +250,8 @@ impl IRParser<'_> {
                 (
                     Some(Instruction::STACK_VAR(
                         decl.identifier.clone(),
+                        // todo get the type
+                        Type::STRUCT("runtime_type".to_string()),
                         Some(IRValue::STRUCT(vec![IRValue::INT(123)])),
                     )),
                     None,
@@ -266,6 +268,8 @@ impl IRParser<'_> {
                 (
                     Some(Instruction::STACK_VAR(
                         decl.identifier.clone(),
+                        // todo get the type!
+                        Type::I32,
                         instruction_data,
                     )),
                     None,

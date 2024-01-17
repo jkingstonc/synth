@@ -5,6 +5,7 @@ use log::{debug, info};
 use crate::{
     compiler::CompilerOptions,
     ir::{IRValue, Instruction, Ref},
+    types::Type,
 };
 
 pub struct IRInterpreter<'a> {
@@ -42,7 +43,7 @@ impl IRInterpreter<'_> {
         match instruction {
             Instruction::PROGRAM(instructions) => self.execute_program(instructions.clone()),
             Instruction::BLOCK(_, instructions) => self.excecute_block(instructions.clone()),
-            Instruction::STACK_VAR(label, value) => self.execute_stack_var(label, value),
+            Instruction::STACK_VAR(label, typ, value) => self.execute_stack_var(label, typ, value),
             Instruction::LOAD(label, value) => self.execute_load(label, value),
             Instruction::ADD(label, left, right) => self.execute_add(label, left, right),
             Instruction::CALL(label, callee, args) => self.execute_call(label, callee, args),
@@ -89,7 +90,12 @@ impl IRInterpreter<'_> {
         None
     }
 
-    fn execute_stack_var(&mut self, label: &String, value: &Option<IRValue>) -> Option<IRValue> {
+    fn execute_stack_var(
+        &mut self,
+        label: &String,
+        typ: &Type,
+        value: &Option<IRValue>,
+    ) -> Option<IRValue> {
         if let Some(data) = value {
             match data {
                 IRValue::INT(i) => self.variables_map.insert(label.to_string(), data.clone()),
