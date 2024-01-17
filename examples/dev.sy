@@ -8,4 +8,19 @@ const Point: type = type {
 }
 
 
-printf("i just got types working.... ?")
+
+
+
+
+
+const x = 3235
+const y = x + 3
+
+
+
+
+
+
+fn test (p: i32, f: i32) {
+    printf("hi")
+}

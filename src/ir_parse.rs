@@ -402,8 +402,16 @@ impl IRParser<'_> {
             self.lambda_counter += 1;
         }
 
+        // todo for some expressions such as calls we dont return the instruction, i think we should return
+        // the instructions by default and let the blocks generate them?
         let (i, _) = self.gen_ast(&mut func.body, current_block);
-        let func_instruction = Instruction::FUNC(name, Box::new(i.unwrap()));
+
+        let mut params: Vec<Type> = vec![];
+        for p in func.params.iter() {
+            params.push(p.typ.clone().unwrap());
+        }
+
+        let func_instruction = Instruction::FUNC(name, params, Box::new(i.unwrap()));
 
         (Some(func_instruction), None)
     }

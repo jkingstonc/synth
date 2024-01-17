@@ -251,8 +251,9 @@ impl LLVMCodeGenerator {
                 current_block,
                 current_function,
             ),
-            Instruction::FUNC(name, instruction) => self.generate_func(
+            Instruction::FUNC(name, params, instruction) => self.generate_func(
                 name,
+                params,
                 instruction,
                 context,
                 module,
@@ -600,9 +601,20 @@ impl LLVMCodeGenerator {
         None
     }
 
+    fn type_to_llvm_type(&self, typ: &Type) -> *mut LLVMType {
+        unsafe {
+            match typ {
+                Type::I32 => LLVMInt32Type(),
+                Type::U32 => LLVMInt32Type(),
+                _ => todo!(),
+            }
+        }
+    }
+
     fn generate_func(
         &mut self,
         name: &String,
+        params: &Vec<Type>,
         instruction: &Instruction,
         context: *mut LLVMContext,
         module: *mut LLVMModule,
@@ -612,7 +624,18 @@ impl LLVMCodeGenerator {
     ) -> Option<*mut LLVMValue> {
         unsafe {
             let void = LLVMVoidType();
-            let function_type = llvm_sys::core::LLVMFunctionType(void, std::ptr::null_mut(), 0, 0);
+
+            let mut param_types: Vec<*mut LLVMType> = vec![];
+            for param in params {
+                param_types.push(self.type_to_llvm_type(param));
+            }
+
+            let function_type = llvm_sys::core::LLVMFunctionType(
+                void,
+                param_types.as_mut_ptr(),
+                param_types.len().try_into().unwrap(),
+                0,
+            );
 
             let fn_name = CString::new(name.to_string()).unwrap();
             let ptr_fn_name = fn_name.as_ptr();

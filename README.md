@@ -49,3 +49,4 @@ WARNING: this may make you want to rip your hair out...
 - [ ] need a newline at the end otherwise lexer breaks
 - [ ] when we encounter a keyword, we don't check if theres whitespace after it which we should
 - [ ] cannot comp on a single value i.e. `comp 0`
+- [ ] function bodies have to be blocks (see IRParser returning instructions)

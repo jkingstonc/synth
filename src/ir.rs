@@ -51,7 +51,7 @@ pub enum Instruction {
     COND_BR(IRValue, Box<Instruction>, Option<Box<Instruction>>),
     // first arg is the function to call, the second is the first param (todo support more params)
     CALL(String, String, Vec<IRValue>),
-    FUNC(String, Box<Instruction>),
+    FUNC(String, Vec<Type>, Box<Instruction>),
     // todo need to decide if this is typed/untyped!
     // todo for now this is just the type but we may want the identifier?
     TYPE(String, Vec<Type>),
@@ -93,8 +93,8 @@ impl Instruction {
                     location, "call", callee, arg
                 )
             }
-            Instruction::FUNC(name, instructions) => {
-                format!("def {:<15} = {:?}", name, instructions)
+            Instruction::FUNC(name, params, instructions) => {
+                format!("def {:<15} ({:?}) = {:?}", name, params, instructions)
             }
             Instruction::TYPE(label, types) => {
                 format!("{:<15} = type {:?}", label, types)
