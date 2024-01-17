@@ -1,16 +1,18 @@
 extern crate llvm_sys;
 use llvm_sys::core::{
-    LLVMAppendBasicBlock, LLVMAppendBasicBlockInContext, LLVMArrayType, LLVMArrayType2,
-    LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBitCast, LLVMBuildBr, LLVMBuildCall2,
-    LLVMBuildCast, LLVMBuildCondBr, LLVMBuildGlobalString, LLVMBuildGlobalStringPtr, LLVMBuildICmp,
-    LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2, LLVMBuildRetVoid, LLVMBuildStore,
-    LLVMConstArray2, LLVMConstInt, LLVMConstPointerNull, LLVMCreateBasicBlockInContext,
-    LLVMGetNamedGlobal, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
-    LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMVoidType,
+    LLVMAddGlobal, LLVMAppendBasicBlock, LLVMAppendBasicBlockInContext, LLVMArrayType,
+    LLVMArrayType2, LLVMBasicBlockAsValue, LLVMBuildAlloca, LLVMBuildBitCast, LLVMBuildBr,
+    LLVMBuildCall2, LLVMBuildCast, LLVMBuildCondBr, LLVMBuildGlobalString,
+    LLVMBuildGlobalStringPtr, LLVMBuildICmp, LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2,
+    LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildStructGEP2, LLVMConstArray2, LLVMConstInt,
+    LLVMConstPointerNull, LLVMConstStruct, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal,
+    LLVMGetStructName, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
+    LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMSetDataLayout, LLVMStructCreateNamed,
+    LLVMStructSetBody, LLVMStructType, LLVMStructTypeInContext, LLVMVoidType,
 };
 use llvm_sys::execution_engine::LLVMGetGlobalValueAddress;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
-use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMContext, LLVMModule, LLVMValue};
+use llvm_sys::{LLVMBasicBlock, LLVMBuilder, LLVMContext, LLVMModule, LLVMType, LLVMValue};
 use log::{debug, error, info, warn};
 use std::ffi::{CStr, CString};
 use std::fmt::format;
@@ -21,6 +23,7 @@ use std::{fs, process::Command};
 
 use crate::ir::{IRValue, Instruction, Ref};
 use crate::symtable::SymTable;
+use crate::types::Type;
 
 pub struct LLVMValueBundle {
     pub llvm_value: LLVMValueRef,
@@ -251,7 +254,15 @@ impl LLVMCodeGenerator {
                 current_block,
                 current_function,
             ),
-            Instruction::TYPE(_, _) => todo!(),
+            Instruction::TYPE(label, types) => self.generate_type(
+                label,
+                types,
+                context,
+                module,
+                builder,
+                current_block,
+                current_function,
+            ),
             _ => panic!("unsupported instruction {:?}", instruction),
         }
     }
@@ -391,6 +402,42 @@ impl LLVMCodeGenerator {
                 );
             }
             panic!("must be ref to do a load!");
+        }
+        None
+    }
+
+    fn generate_type(
+        &mut self,
+        label: &String,
+        types: &Vec<Type>,
+        context: *mut LLVMContext,
+        module: *mut LLVMModule,
+        builder: *mut LLVMBuilder,
+        current_block: *mut LLVMBasicBlock,
+        current_function: *mut LLVMValue,
+    ) -> Option<*mut LLVMValue> {
+        unsafe {
+            debug!("doing type!");
+            let mut typs_vec: Vec<*mut LLVMType> = vec![];
+            for typ in types {
+                typs_vec.push(LLVMInt32Type());
+            }
+
+            let label_var =
+                CString::new(format!("{}_struct", label).as_bytes()).expect("expected string");
+            let label_var_ptr = label_var.as_ptr();
+            let struct_type = LLVMStructCreateNamed(context, label_var_ptr);
+
+            LLVMStructSetBody(
+                struct_type,
+                typs_vec.as_mut_ptr(),
+                typs_vec.len().try_into().unwrap(),
+                0,
+            );
+
+            let label_var = CString::new(label.as_bytes()).expect("test");
+            let label_var_ptr = label_var.as_ptr();
+            LLVMBuildAlloca(builder, struct_type, label_var_ptr);
         }
         None
     }

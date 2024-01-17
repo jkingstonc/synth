@@ -258,7 +258,6 @@ impl Lexer {
 
     fn identifier(&mut self) {
         let mut s = String::from("");
-        //println!("doing identifier for char {}.", self.program.chars().nth(self.current).unwrap());
         while !self.end()
             && (self
                 .program
@@ -271,7 +270,6 @@ impl Lexer {
             s.push(self.program.chars().nth(self.current).unwrap());
             self.current += 1;
         }
-        //println!("s is {}.", s);
         self.tokens.push(Token::IDENTIFIER(s));
     }
 
