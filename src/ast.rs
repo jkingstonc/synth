@@ -31,6 +31,7 @@ pub struct Call<'a> {
 #[derive(Debug)]
 pub struct Decl<'a> {
     pub identifier: String,
+    pub typ: Option<Type>,
     // todo types
     // pub typ: Type,
     pub requires_infering: bool,

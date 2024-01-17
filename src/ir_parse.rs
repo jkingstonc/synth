@@ -235,20 +235,43 @@ impl IRParser<'_> {
         // instructions: &mut Box<Vec<Instruction>>,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<IRValue>) {
-        // first generate the decl value
-        let mut instruction_data = None;
-        if let Some(value) = decl.value.as_mut() {
-            let (_, data) = self.gen_ast(value, current_block);
-            instruction_data = data;
+        // todo check if we are dealing with a struct!
+
+        match decl.typ {
+            Some(Type::TYPE) => {
+                if let Some(value) = decl.value.as_mut() {
+                    let (_, data) = self.gen_ast(value, current_block);
+                }
+                // we then need to stack the var & give it a value
+
+                // todo populate this with the type information
+                // todo we probably also want to specify the name of the struct or if its anonymous,
+                // otherwise this wont translate well to llvm
+                (
+                    Some(Instruction::STACK_VAR(
+                        decl.identifier.clone(),
+                        Some(IRValue::STRUCT(vec![IRValue::INT(123)])),
+                    )),
+                    None,
+                )
+            }
+            _ => {
+                // first generate the decl value
+                let mut instruction_data = None;
+                if let Some(value) = decl.value.as_mut() {
+                    let (_, data) = self.gen_ast(value, current_block);
+                    instruction_data = data;
+                }
+                self.counter += 1;
+                (
+                    Some(Instruction::STACK_VAR(
+                        decl.identifier.clone(),
+                        instruction_data,
+                    )),
+                    None,
+                )
+            }
         }
-        self.counter += 1;
-        (
-            Some(Instruction::STACK_VAR(
-                decl.identifier.clone(),
-                instruction_data,
-            )),
-            None,
-        )
     }
 
     fn gen_block(

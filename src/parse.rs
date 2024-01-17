@@ -78,6 +78,15 @@ impl Parser<'_> {
         self.decl_or_assign(current)
     }
 
+    fn parse_type(&self, current: &mut usize) -> Type {
+        match self.consume(current) {
+            Token::I32 => Type::I32,
+            Token::TYPE => Type::TYPE,
+            Token::IDENTIFIER(i) => Type::STRUCT(i.to_string()),
+            _ => panic!(),
+        }
+    }
+
     fn decl_or_assign(&self, current: &mut usize) -> ParsedAST {
         // self.assign(current)
         // todo
@@ -97,12 +106,22 @@ impl Parser<'_> {
                     Token::IDENTIFIER(i) => identifier = i.to_string(),
                     _ => panic!(),
                 }
+
+                let mut typ: Option<Type> = None;
+                if self.expecting(Token::COLON, current) {
+                    // get the type
+                    self.consume(current);
+                    typ = Some(self.parse_type(current));
+                }
+
                 self.consume(current); // consume the =
                 let value = self.expression(current);
 
+                debug!("parsing decl type! {:?}", typ);
                 return ParsedAST::DECL(Decl {
                     identifier,
                     requires_infering: true,
+                    typ: typ,
                     value: Some(Box::new(value)),
                 });
             }
@@ -113,11 +132,20 @@ impl Parser<'_> {
                     Token::IDENTIFIER(i) => identifier = i.to_string(),
                     _ => panic!(),
                 }
+
+                let mut typ: Option<Type> = None;
+                if self.expecting(Token::COLON, current) {
+                    // get the type
+                    self.consume(current);
+                    typ = Some(self.parse_type(current));
+                }
+
                 self.consume(current); // consume the =
                 let value = self.expression(current);
 
                 return ParsedAST::DECL(Decl {
                     identifier,
+                    typ: typ,
                     requires_infering: true,
                     value: Some(Box::new(value)),
                 });

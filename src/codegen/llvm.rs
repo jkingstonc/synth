@@ -301,6 +301,7 @@ impl LLVMCodeGenerator {
 
         unsafe {
             match ir_value {
+                IRValue::STRUCT(_) => todo!(),
                 IRValue::INT(i) => LLVMConstInt(LLVMInt32Type(), *i as u64, 1),
                 IRValue::FLOAT(_) => todo!(),
                 IRValue::REF(r) => {
@@ -458,9 +459,9 @@ impl LLVMCodeGenerator {
             let type_struct_name_ptr = type_struct_name.as_ptr();
             let type_struct_type = LLVMGetTypeByName2(context, type_struct_name_ptr);
 
-            let tmp = CString::new("tmp".as_bytes()).expect("expected string");
-            let tmp_ptr = tmp.as_ptr();
-            LLVMBuildAlloca(builder, type_struct_type, tmp_ptr);
+            // let tmp = CString::new("tmp".as_bytes()).expect("expected string");
+            // let tmp_ptr = tmp.as_ptr();
+            // LLVMBuildAlloca(builder, type_struct_type, tmp_ptr);
 
             // todo we need to return an LLVM value to the actual type struct!
         }
@@ -839,6 +840,20 @@ impl LLVMCodeGenerator {
                                 is_ref: false,
                             },
                         );
+                    }
+                    IRValue::STRUCT(_) => {
+                        // todo we need the struct type information :(
+                        let alloca_instruction = llvm_sys::core::LLVMBuildAlloca(
+                            builder,
+                            LLVMStructType(vec![LLVMInt32Type()].as_mut_ptr(), 1, 0),
+                            ptr,
+                        );
+                        let s = LLVMConstStruct(
+                            vec![LLVMConstInt(LLVMInt32Type(), 23, 1)].as_mut_ptr(),
+                            1,
+                            0,
+                        );
+                        LLVMBuildStore(builder, s, alloca_instruction);
                     }
                     _ => todo!(),
                 }

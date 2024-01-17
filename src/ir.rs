@@ -18,6 +18,7 @@ pub enum IRValue {
     INT(i32),
     FLOAT(f32),
     STRING(String),
+    STRUCT(Vec<IRValue>),
     // todo this is a hack
     INTRINSIC(String),
 }

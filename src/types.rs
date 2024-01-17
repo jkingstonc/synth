@@ -15,7 +15,9 @@ pub enum Type {
     FN(FnPrimative),
     BLOCK,
     TYPE,
-    STRUCT,
+    // name of the struct
+    // todo this should probably be optional
+    STRUCT(String),
 }
 
 impl Type {
@@ -24,7 +26,7 @@ impl Type {
             Type::U32 => 4,
             Type::I32 => 4,
             Type::F32 => 4,
-            Type::STRUCT => todo!("size of struct"),
+            Type::STRUCT(_) => todo!("size of struct"),
             _ => panic!("unknown type"),
         }
     }
