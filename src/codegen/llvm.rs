@@ -6,7 +6,7 @@ use llvm_sys::core::{
     LLVMBuildGlobalStringPtr, LLVMBuildICmp, LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2,
     LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildStructGEP2, LLVMConstArray2, LLVMConstInt,
     LLVMConstPointerNull, LLVMConstStruct, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal,
-    LLVMGetStructName, LLVMGetTypeByName2, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type,
+    LLVMGetParam, LLVMGetStructName, LLVMGetTypeByName2, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type,
     LLVMPointerType, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMSetDataLayout,
     LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructType, LLVMStructTypeInContext,
     LLVMVoidType,
