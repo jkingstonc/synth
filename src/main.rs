@@ -157,15 +157,12 @@ fn main() {
     //     _ => {}
     // }
 
-    // // tmp
     // let mut ir_interpreter = ir_interpret::IRInterpreter {
     //     compiler_options: &compiler_options,
     //     counter: 0,
     //     variables_map: HashMap::new(),
     // };
     // ir_interpreter.execute(&main_block);
-
-    // optimization stage
 
     match args.arch.as_str() {
         "x86" => {
@@ -176,7 +173,7 @@ fn main() {
                 str_buffer: "".to_string(),
                 sym_table: SymTable::new(),
             };
-            // code_generator.generate(&main_block);
+            code_generator.generate(&main_block);
         }
         _ => {
             error!(

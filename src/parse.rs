@@ -18,13 +18,14 @@ pub struct Parser<'a> {
 impl Parser<'_> {
     pub fn parse(&mut self) -> Box<ParsedAST> {
         let now = Instant::now();
+        let ast = Box::new(self.parse_program());
         let elapsed = now.elapsed();
         debug!(
             "parse time elapsed {:.2?}ms ({:.2?}s).",
             elapsed.as_millis(),
             elapsed.as_secs()
         );
-        Box::new(self.parse_program())
+        ast
     }
 
     fn parse_program(&mut self) -> ParsedAST {

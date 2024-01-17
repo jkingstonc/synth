@@ -120,7 +120,7 @@ impl LLVMCodeGenerator {
 
         let elapsed = now.elapsed();
         debug!(
-            "codegen time elapsed {:.2?}ms ({:.2?}s).",
+            "LLVM codegen time elapsed {:.2?}ms ({:.2?}s).",
             elapsed.as_millis(),
             elapsed.as_secs()
         );
@@ -251,6 +251,7 @@ impl LLVMCodeGenerator {
                 current_block,
                 current_function,
             ),
+            Instruction::TYPE(_, _) => todo!(),
             _ => panic!("unsupported instruction {:?}", instruction),
         }
     }

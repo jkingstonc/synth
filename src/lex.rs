@@ -1,3 +1,7 @@
+use std::time::Instant;
+
+use log::debug;
+
 use crate::token::Token;
 
 pub struct Lexer {
@@ -20,6 +24,8 @@ impl Lexer {
         //-> Box<Vec<Token>>{
 
         self.program = program;
+
+        let now = Instant::now();
 
         while !self.end() {
             match self.program.chars().nth(self.current).unwrap() {
@@ -192,9 +198,12 @@ impl Lexer {
             self.current += 1;
         }
 
-        // for token in self.tokens.iter() {
-        //     println!("token {:?}", token);
-        // }
+        let elapsed = now.elapsed();
+        debug!(
+            "lex time elapsed {:.2?}ms ({:.2?}s).",
+            elapsed.as_millis(),
+            elapsed.as_secs()
+        );
     }
 
     fn single_line_comment(&mut self) {
