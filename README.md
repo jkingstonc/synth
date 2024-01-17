@@ -44,6 +44,7 @@ WARNING: this may make you want to rip your hair out...
 - [ ] IR generation
     - [ ] if not used, dont generate
 - [ ] X86 generation
+- [ ] LLVM get the arguments if one is used
 
 # Bugs
 - [ ] need a newline at the end otherwise lexer breaks
