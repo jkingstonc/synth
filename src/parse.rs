@@ -6,7 +6,7 @@ use log::debug;
 
 use crate::ast::{
     Assign, Binary, Block, Call, Decl, ExpressionInstruction, ExpressionInstructionEnum, Fun, If,
-    LeftUnary, LhsAccess, Number, ParsedAST, Program, Typ,
+    LeftUnary, LhsAccess, Number, ParsedAST, Program, Qualifier, Typ,
 };
 use crate::token::Token;
 use crate::types::Type;
@@ -120,6 +120,7 @@ impl Parser<'_> {
                 debug!("parsing decl type! {:?}", typ);
                 return ParsedAST::DECL(Decl {
                     identifier,
+                    qualifier: Qualifier::CONST,
                     requires_infering: true,
                     typ: typ,
                     value: Some(Box::new(value)),
@@ -145,6 +146,7 @@ impl Parser<'_> {
 
                 return ParsedAST::DECL(Decl {
                     identifier,
+                    qualifier: Qualifier::VAR,
                     typ: typ,
                     requires_infering: true,
                     value: Some(Box::new(value)),
@@ -405,10 +407,47 @@ impl Parser<'_> {
             Token::FN => {
                 self.consume(current);
                 let identifier = self.consume(current);
+
+                // do params
+
+                let mut params: Vec<Decl<'_>> = vec![];
+                if self.expecting(Token::LPAREN, current) {
+                    self.consume(current);
+
+                    loop {
+                        if self.expecting(Token::RPAREN, current) {
+                            self.consume(current);
+                            break;
+                        }
+                        // do a decl
+                        let identifier = self.consume(current);
+                        self.consume(current);
+                        let typ = self.parse_type(current);
+
+                        let Token::IDENTIFIER(i) = identifier else {
+                            // todo do this more:)
+                            panic!("expected identifier");
+                        };
+
+                        params.push(Decl {
+                            identifier: i.to_string(),
+                            qualifier: Qualifier::CONST,
+                            typ: Some(typ),
+                            requires_infering: false,
+                            value: None,
+                        });
+
+                        if !self.expecting(Token::RPAREN, current) {
+                            // todo we need to verify were consuming the right thing
+                            self.consume(current); // consume the ,
+                        }
+                    }
+                }
+
                 if let Token::IDENTIFIER(i) = identifier {
                     return ParsedAST::FN(Fun {
                         identifier: Some(i.to_string()),
-                        params: vec![],
+                        params: params,
                         body: Box::new(self.statement(current)),
                     });
                 }
@@ -440,7 +479,10 @@ impl Parser<'_> {
                 // consume the rbracket
                 self.consume(current);
 
-                ParsedAST::TYPE(Typ { fields })
+                ParsedAST::TYPE(Typ {
+                    fields,
+                    anon_name: None,
+                })
             }
             // Token::HASH => {
             //     self.consume(current);

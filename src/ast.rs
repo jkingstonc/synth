@@ -3,6 +3,12 @@ use std::collections::HashMap;
 use crate::{token::Token, types::Type};
 
 #[derive(Debug)]
+pub enum Qualifier {
+    CONST,
+    VAR,
+}
+
+#[derive(Debug)]
 pub struct Program<'a> {
     // todo this should probably be an array of Box<ParsedAST>
     pub body: Vec<ParsedAST<'a>>,
@@ -31,6 +37,7 @@ pub struct Call<'a> {
 #[derive(Debug)]
 pub struct Decl<'a> {
     pub identifier: String,
+    pub qualifier: Qualifier,
     pub typ: Option<Type>,
     // todo types
     // pub typ: Type,
@@ -91,6 +98,7 @@ pub enum LeftUnary<'a> {
 #[derive(Debug)]
 pub struct Typ {
     pub fields: HashMap<String, Type>,
+    pub anon_name: Option<String>,
 }
 
 // todo this should be a struct so we get positional information

@@ -3,7 +3,10 @@ use std::{borrow::BorrowMut, collections::HashMap, time::Instant, vec};
 use log::debug;
 
 use crate::{
-    ast::{Assign, Binary, Block, Call, Decl, Fun, If, LeftUnary, Number, ParsedAST, Program, Typ},
+    ast::{
+        Assign, Binary, Block, Call, Decl, Fun, If, LeftUnary, Number, ParsedAST, Program,
+        Qualifier, Typ,
+    },
     compiler::CompilerOptions,
     ir::{IRValue, Instruction, Ref},
     ir_interpret::IRInterpreter,
@@ -237,8 +240,24 @@ impl IRParser<'_> {
     ) -> (Option<Instruction>, Option<IRValue>) {
         // todo check if we are dealing with a struct!
 
-        match decl.typ {
+        match &decl.typ {
+            Some(Type::STRUCT(i)) => (
+                Some(Instruction::STACK_VAR(
+                    decl.identifier.clone(),
+                    decl.typ.clone().unwrap(),
+                    None,
+                )),
+                None,
+            ),
             Some(Type::TYPE) => {
+                // todo figure out the const type qualifier thingy here!
+                match decl.qualifier {
+                    Qualifier::CONST => {}
+                    Qualifier::VAR => {
+                        //
+                    }
+                }
+
                 if let Some(value) = decl.value.as_mut() {
                     let (_, data) = self.gen_ast(value, current_block);
                 }
@@ -251,7 +270,7 @@ impl IRParser<'_> {
                     Some(Instruction::STACK_VAR(
                         decl.identifier.clone(),
                         // todo get the type
-                        Type::STRUCT("runtime_type".to_string()),
+                        Type::STRUCT("Runtime_Type".to_string()),
                         Some(IRValue::STRUCT(vec![IRValue::INT(123)])),
                     )),
                     None,
@@ -355,8 +374,7 @@ impl IRParser<'_> {
         typ: &mut Typ,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<IRValue>) {
-        // todo we need to decide how this works, as currently the type is seperate by itself from the variable if we do
-        // var x = type {...}
+        // todo we need to somehow get the anonymous name of the type?
         let mut types: Vec<Type> = vec![];
         for (_, t) in typ.fields.iter_mut() {
             types.push(t.clone());

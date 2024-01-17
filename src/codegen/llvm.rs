@@ -39,7 +39,7 @@ pub struct LLVMCodeGenerator {
     pub sym_table: SymTable<String, LLVMValueBundle>,
 }
 
-const TYPE_STRUCT_NAME: &str = "runtime_type";
+const TYPE_STRUCT_NAME: &str = "Runtime_Type";
 
 /*
 References:
