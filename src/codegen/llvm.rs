@@ -6,9 +6,10 @@ use llvm_sys::core::{
     LLVMBuildGlobalStringPtr, LLVMBuildICmp, LLVMBuildIntCast, LLVMBuildIntCast2, LLVMBuildLoad2,
     LLVMBuildRetVoid, LLVMBuildStore, LLVMBuildStructGEP2, LLVMConstArray2, LLVMConstInt,
     LLVMConstPointerNull, LLVMConstStruct, LLVMCreateBasicBlockInContext, LLVMGetNamedGlobal,
-    LLVMGetStructName, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type, LLVMPointerType,
-    LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMSetDataLayout, LLVMStructCreateNamed,
-    LLVMStructSetBody, LLVMStructType, LLVMStructTypeInContext, LLVMVoidType,
+    LLVMGetStructName, LLVMGetTypeByName2, LLVMInt1Type, LLVMInt32Type, LLVMInt8Type,
+    LLVMPointerType, LLVMPositionBuilder, LLVMPositionBuilderAtEnd, LLVMSetDataLayout,
+    LLVMStructCreateNamed, LLVMStructSetBody, LLVMStructType, LLVMStructTypeInContext,
+    LLVMVoidType,
 };
 use llvm_sys::execution_engine::LLVMGetGlobalValueAddress;
 use llvm_sys::prelude::{LLVMModuleRef, LLVMValueRef};
@@ -38,6 +39,8 @@ pub struct LLVMCodeGenerator {
     pub sym_table: SymTable<String, LLVMValueBundle>,
 }
 
+const TYPE_STRUCT_NAME: &str = "type_struct";
+
 /*
 References:
 - https://github.com/lyledean1/calculon/blob/main/src/main.rs
@@ -63,6 +66,7 @@ impl LLVMCodeGenerator {
                 llvm_sys::core::LLVMModuleCreateWithName(b"my_module\0".as_ptr() as *const _);
             let builder = llvm_sys::core::LLVMCreateBuilderInContext(context);
 
+            self.generate_runtime(context, module, builder);
             self.generate_builtins(module, builder);
 
             // Get the type signature for void nop(void);
@@ -127,6 +131,21 @@ impl LLVMCodeGenerator {
             elapsed.as_millis(),
             elapsed.as_secs()
         );
+    }
+
+    fn generate_runtime(
+        &mut self,
+        context: *mut LLVMContext,
+        module: *mut LLVMModule,
+        builder: *mut LLVMBuilder,
+    ) {
+        unsafe {
+            let label_var = CString::new(TYPE_STRUCT_NAME.as_bytes()).expect("expected string");
+            let label_var_ptr = label_var.as_ptr();
+            let struct_type = LLVMStructCreateNamed(context, label_var_ptr);
+
+            LLVMStructSetBody(struct_type, vec![LLVMInt32Type()].as_mut_ptr(), 1, 0);
+        }
     }
 
     fn generate_builtins(
@@ -417,7 +436,6 @@ impl LLVMCodeGenerator {
         current_function: *mut LLVMValue,
     ) -> Option<*mut LLVMValue> {
         unsafe {
-            debug!("doing type!");
             let mut typs_vec: Vec<*mut LLVMType> = vec![];
             for typ in types {
                 typs_vec.push(LLVMInt32Type());
@@ -435,9 +453,16 @@ impl LLVMCodeGenerator {
                 0,
             );
 
-            let label_var = CString::new(label.as_bytes()).expect("test");
-            let label_var_ptr = label_var.as_ptr();
-            LLVMBuildAlloca(builder, struct_type, label_var_ptr);
+            let type_struct_name =
+                CString::new(TYPE_STRUCT_NAME.as_bytes()).expect("expected string");
+            let type_struct_name_ptr = type_struct_name.as_ptr();
+            let type_struct_type = LLVMGetTypeByName2(context, type_struct_name_ptr);
+
+            let tmp = CString::new("tmp".as_bytes()).expect("expected string");
+            let tmp_ptr = tmp.as_ptr();
+            LLVMBuildAlloca(builder, type_struct_type, tmp_ptr);
+
+            // todo we need to return an LLVM value to the actual type struct!
         }
         None
     }
