@@ -328,8 +328,20 @@ impl IRParser<'_> {
         typ: &mut Typ,
         current_block: &mut Box<Vec<Instruction>>,
     ) -> (Option<Instruction>, Option<IRValue>) {
-        let type_instruction = Instruction::TYPE("anon_type".to_string());
-        (Some(type_instruction), None)
+        // todo we need to decide how this works, as currently the type is seperate by itself from the variable if we do
+        // var x = type {...}
+        let mut types: Vec<Type> = vec![];
+        for (_, t) in typ.fields.iter_mut() {
+            types.push(t.clone());
+        }
+        let type_instruction = Instruction::TYPE("anon_type".to_string(), types);
+        self.write_instruction_to_block(type_instruction, current_block);
+        (
+            None,
+            Some(IRValue::REF(Ref {
+                value: "anon_type".to_string(),
+            })),
+        )
     }
 
     fn gen_func(

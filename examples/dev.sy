@@ -5,25 +5,5 @@
 
 const Point = type {
     x: i32
+    y: i32
 }
-
-
-
-fn test {
-
-    printf("test\n")
-}
-
-comp printf("im at compile time!")
-
-test()
-test()
-test()
-
-
-
-fn __entry {
-    printf("kernel entry")
-}
-
-__entry()

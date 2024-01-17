@@ -176,7 +176,7 @@ fn main() {
                 str_buffer: "".to_string(),
                 sym_table: SymTable::new(),
             };
-            code_generator.generate(&main_block);
+            // code_generator.generate(&main_block);
         }
         _ => {
             error!(

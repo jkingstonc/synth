@@ -1,3 +1,5 @@
+use crate::types::Type;
+
 // a ref refers to a location in memory (this is abstracted away, it could be a register, the stack etc. it's up to the code-generator to decide that)
 #[derive(Debug, Clone)]
 pub struct Ref {
@@ -50,7 +52,8 @@ pub enum Instruction {
     CALL(String, String, Vec<IRValue>),
     FUNC(String, Box<Instruction>),
     // todo need to decide if this is typed/untyped!
-    TYPE(String),
+    // todo for now this is just the type but we may want the identifier?
+    TYPE(String, Vec<Type>),
 }
 
 impl Instruction {
@@ -92,8 +95,8 @@ impl Instruction {
             Instruction::FUNC(name, instructions) => {
                 format!("def {:<15} = {:?}", name, instructions)
             }
-            Instruction::TYPE(name) => {
-                format!("type {:<15}", name,)
+            Instruction::TYPE(label, types) => {
+                format!("{:<15} = type {:?}", label, types)
             }
             Instruction::COND_BR(condition, body, else_body) => {
                 if let Some(else_body_unwrapped) = else_body {
